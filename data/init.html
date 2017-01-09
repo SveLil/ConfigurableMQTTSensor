@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<title>WiFi Login</title>
+	<style type=text/css>
+
+	body {
+		font-family: sans-serif;
+		text-align: center;
+		background: #3F97FA;
+		margin: 0px;
+		min-width: 260px;
+	}
+
+	ul.tab {
+		list-style-type: none;
+		margin: 0px auto;
+		padding: 0px;
+		overflow: hidden;
+		width: 95%;
+		max-width: 640px;
+	}
+
+	ul.tab li {
+		float: left;
+		padding: 0px 1px;
+		top: 2px;
+	}
+
+	ul.tab li a {
+		display: inline-block;
+		color: black;
+		text-align: center;
+		padding: 10px 20px;
+		text-decoration: none;
+		border: 1px solid #ccc;
+		margin-left: -1px;
+		left: 1px;
+		background: #FFF;
+		position: relative;
+	}
+
+	ul.tab li a:hover {
+		background-color: #95C6FD;
+		border-color: #6FB2FC;
+	}
+
+	ul.tab li a:focus, .active {
+		border-bottom: 1px solid white;
+		z-index: 2;
+		background-color: #FFF;
+				top: 0px;
+	}
+	ul.tab li .active {
+		border-bottom: 1px solid white;
+		box-shadow: 1px 1px 15px 3px rgba(0, 0, 0, .4)
+		top: 0px;
+	}
+
+	.tabcontent {
+		display: none;
+		padding: 6px 12px;
+		border-top: 1px solid #ccc;
+		margin-top: -1px;
+	}
+	#content {
+		width: 95%;
+		max-width: 640px;
+		min-height: 480px;
+		margin: 0px auto;
+		background-color: #FFF;
+		box-shadow: 1px 1px 15px 3px rgba(0, 0, 0, .4);
+		border-radius: 1px;
+		position: relative;
+	}
+	#tabheader {
+		background: #6FB2FD;
+		padding: 5px 15px 0px 15px;
+	}
+	form {
+		padding: 0px 20px;
+	}
+	form > * {
+		display: block;
+		padding: 15px;
+		margin-bottom: 10px;
+		border: 1px solid #ccc;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	input {
+		font-size: 18px;
+	}
+
+	.combo {
+		background-color: #FFF;
+		display: inline-block;
+		position: relative;
+		padding: 0px;
+		border: 0px;
+	}
+	.combo:after {
+		content: '\25bc';
+		position: absolute;
+		top: 18px;
+		right: 18px;
+		z-index: 5;
+	}
+	#StatusWrapper {
+		height: 58px;
+	}
+	#Status {
+		padding: 20px 0px;
+		width: 100%;
+		bottom: 0px;
+		position: absolute;
+	}
+	button {
+		background-color: #5284BB;
+		color: #FFF;
+	}
+	select {
+		padding: 15px;
+		-webkit-appearance: none;
+		-ms-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		border: 1px solid #ccc;
+		background-color: transparent;
+		position: relative;
+		cursor: pointer;
+		z-index: 10;
+		width: 100%;
+		font-size: 18px;
+	}
+	input[type="checkbox"] {
+	}
+	label {
+		width: 100%;
+		display: block;
+		text-align: left;
+		border: 0px;
+
+	}
+	</style>
+</head>
+
+<body>
+	<div id="tabheader">
+		<ul class="tab">
+			<li><a href="javascript:void(0)" class="tablinks" id="WiFiTab" onclick="openTab('WiFi')">WiFi</a></li>
+			<li><a href="javascript:void(0)" class="tablinks" id="MQTTTab" onclick="openTab('MQTT')">MQTT</a></li>
+			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="SensorsTab" onclick="openTab('Sensors')">Sensors</a></li>
+			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="AboutTab" onclick="openTab('About')">About</a></li>
+		</ul>
+	</div>
+	<div id="content">
+		<div id="tabs">
+			<div id="WiFi" class="tabcontent">
+				<h2>WiFi</h2>
+				<p>Set up your wifi connection
+				</p>
+				<form id="WiFiForm">
+					<button id="getNetworks"type="button">Scan for networks</button>
+					<div id="apcombo" class="combo" style="display: none;" >
+						<select id="aplist" onchange="{
+							var aplist = $('#aplist');
+							$('#ssid').value = aplist.options[aplist.selectedIndex].value;
+						}"></select>
+					</div>
+					<input id="ssid" name="ssid" type="text" autocapitalize="none" placeholder="SSID" />
+					<input id="wifi_password" name="wifi_password" type="password" placeholder="Password" />
+					<button id="submitWiFi" type="button">Save WiFi</button>
+				</form>
+			</div>
+
+			<div id="MQTT" class="tabcontent">
+				<h2>MQTT</h2>
+				<p>Set up your MQTT connection
+				</p>
+				<form id="MQTTForm">
+					<input name="server" type=text autocorrect=off autocapitalize=none placeholder='MQTT Server' />
+					<input name="port" type=text autocorrect=off autocapitalize=none autocomplete=off placeholder=Port />
+					<label for="ssl">
+						<input id="ssl" type=checkbox autocorrect=off autocapitalize=none autocomplete=off name=ssl />
+						Use SSL
+					</label>
+					<input id="user" type=text autocorrect=off autocapitalize=none placeholder='User' />
+					<input id="password" type=password autocorrect=off autocapitalize=none autocomplete=off placeholder='Password' />
+					<input id="sensor_name" type=text autocorrect=off autocapitalize="none" placeholder="Sensor name" />
+					<button id="submitMQTT" type="button">Save MQTT</button>
+				</form>
+			</div>
+			<div id="Finish" class="tabcontent">
+				<h3>Configuration Saved</h3>
+				<p>Your sensor is now configured. Have fun.</p>
+			</div>
+		</div>
+		<div id="StatusWrapper">
+			<div id="Status"></div>
+		</div>
+	</div>
+	<script>
+	var $$ = function (selector) { return document.querySelectorAll(selector); };
+	var $ = function (selector) { return $$(selector)[0]};
+	var btnN = $('#getNetworks');
+	function openTab(tab) {
+		var i, tabcontent, tablinks;
+		tabcontent = $("#tabs").childNodes;
+		for (i = 0; i < tabcontent.length; i++) {
+			if (tabcontent[i].nodeType == 1) {
+				tabcontent[i].style.display = "none";
+			}
+		}
+		tablinks = $$(".tablinks");
+		for (i = 0; i < tablinks.length; i++) {
+			tablinks[i].className = tablinks[i].className.replace(" active", "");
+		}
+		$('#'+tab).style.display = "block";
+		$('#'+tab+"Tab").className += " active";
+	}
+	function getXhr() {
+		if (window.XMLHttpRequest) {
+			return new XMLHttpRequest();
+		} else {
+			return new ActiveXObject("Microsoft.XMLHTTP");
+		}
+	}
+	function postForm(name, callback) {
+		var form = $("#"+name+"Form");
+		var elements = form.elements;
+		var params = [];
+		for (var i = 0; i < elements.length; i++) {
+			var el = elements[i];
+			if (!el.name || el.disabled) {
+				continue;
+			}
+			var param = el.name + "=";
+			var value = el.value;
+			if (el.tagName == "SELECT") {
+				value =  el.options[el.selectedIndex].value;
+			} else if (el.tagName == "INPUT") {
+				if (el.type == "checkbox") {
+					value = el.checked;
+				} else {
+					if (!value) {
+						continue;
+					}
+				}
+			}
+			param += encodeURIComponent(value);
+			params.push(param);
+		}
+		var xhr = getXhr();
+		xhr.onload = callback.bind(xhr);
+		xhr.open("POST","save"+name);
+		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+		xhr.setRequestHeader('Accept', 'application/json');
+		xhr.send(params.join('&'));
+	}
+	function submitWiFi() {
+		postForm('WiFi', function(xhr) {
+			openTab('MQTT');
+		});
+	}
+	function submitMQTT() {
+		postForm('MQTT', function(xhr) {
+			openTab('Finish');
+		});
+	}
+	function hide(s) {
+		$(s).style.display = 'none';
+	}
+	function show(s) {
+		$(s).style.display = 'block';
+	}
+	function scanNetworks() {
+		var xhr = getXhr();
+		btnN.innerText = 'Scanning...';
+		xhr.onload = function() {
+			btnN.innerText = 'Configure manually';
+			btnN.onclick = toggleManual;
+			show('#apcombo');
+			hide('#ssid');
+			var select = $('#aplist');
+			while (select.length > 0) {
+    		select.remove(0);
+			}
+			var networks = JSON.parse(xhr.responseText);
+			if (networks.sort) {
+				networks.sort(function (a,b) {
+					return a.ssid.localeCompare(b.ssid);
+				});
+			}
+			for (var i=0; i<networks.length; i++) {
+				var option = document.createElement("option");
+				option.text = networks[i].ssid + " (" + networks[i].type +")";
+				option.value = networks[i].ssid;
+				select.add(option);
+			}
+		};
+		xhr.open("GET","scan");
+		xhr.setRequestHeader('Accept', 'application/json');
+		xhr.send();
+	}
+	function toggleManual() {
+		btnN.innerText = 'Scan for networks';
+		btnN.onclick = scanNetworks;
+		hide('#apcombo');
+		show('#ssid');
+	}
+	window.onload = function() {
+		openTab('WiFi');
+		$('#submitWiFi').onclick = submitWiFi;
+		$('#submitMQTT').onclick = submitMQTT;
+		btnN.onclick = scanNetworks;
+	}
+	function loadData() {
+		xhr.onload = function() {
+			var config = JSON.parse(xhr.responseText);
+			$('#ssid').value = config.ssid;
+			$('#wifi_password').value = config.wpassword;
+			$('#server').value = config.server;
+			$('#port').value = config.port;
+			$('#ssl').checked = config.ssl;
+			$('#user').value = config.user;
+			$('#password').value = config.mpassword;
+			$('#sensor_name').value = config.sensor_name;
+		}
+		xhr.open("GET","load");
+		xhr.setRequestHeader('Accept', 'application/json');
+		xhr.send();
+	}
+	loadData();
+	</script>
+</body>
+</html>
