@@ -6,6 +6,7 @@
 ESP8266WebServer webServer = ESP8266WebServer(80);
 const int saveTypeWiFi = 0;
 const int saveTypeMQTT = 1;
+const String MASK_PASSWORD = "SAVED";
 
 void handleNotFound() {
   Serial.println("Not found:" + webServer.uri());
@@ -36,10 +37,25 @@ void handleSave(int saveType) {
 }
 
 void handleSaveMQTT() {
+  int port = webServer.arg("port").toInt();
+  bool useSSL = webServer.arg("useSSL") == "true";
+  String password = webServer.arg("password");
+  if (password == MASK_PASSWORD) {
+    ConfigurationStruct config = SensorConfiguration::getConfig();
+    password = config.mqttConfig.password;
+  }
+
+  SensorConfiguration::saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"));
   handleSave(saveTypeMQTT);
 }
 
 void handleSaveWiFi() {
+  String password = webServer.arg("wifi_password");
+  if (password == MASK_PASSWORD) {
+    ConfigurationStruct config = SensorConfiguration::getConfig();
+    password = config.wifiConfig.password;
+  }
+  SensorConfiguration::saveWifiConfiguration( webServer.arg("ssid"), password);
   handleSave(saveTypeWiFi);
 }
 
@@ -76,11 +92,11 @@ void handleLoad() {
   boolean first = true;
   ConfigurationStruct config = SensorConfiguration::getConfig();
   if (config.status > 0) {
-    json += "\"ssid\": \"" + String(config.wifiConfig.ssid) + "\", \"wpassword\": \"SAVED\"";
+    json += "\"ssid\": \"" + String(config.wifiConfig.ssid) + "\", \"wpassword\": \""+MASK_PASSWORD+"\"";
     if (config.status > 1) {
       String ssl = config.mqttConfig.useSSL ? "true" : "false";
-      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \"SAVED\", \"ssl\": \"" + ssl + "\"";
-      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+String(config.mqttConfig.user) +"\", \"sensor_name\": \""+String(config.mqttConfig.sensorName) +"\"";
+      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + ssl + "\"";
+      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\", \"board_name\": \""+String(config.mqttConfig.boardName) +"\"";
     }
   }
   json +="}";

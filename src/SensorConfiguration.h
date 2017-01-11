@@ -12,11 +12,24 @@ struct MQTTConfiguration {
   bool useSSL;
   char user[64];
   char password[64];
-  char sensorName[256];
+  char boardName[256];
 };
 
-struct ConfigurationStruct{
+enum SensorType {
+  DHT22,
+  ANALOG,
+  DIGITAL,
+};
+
+struct SingleSensorConfiguration {
+  char sensorName[256] ;
+  int pin;
+  SensorType sensorType;
+};
+
+struct ConfigurationStruct {
   int status;
+  int sensorCount;
   WiFiConfiguration wifiConfig;
   MQTTConfiguration mqttConfig;
 };
@@ -24,8 +37,8 @@ struct ConfigurationStruct{
 
 class SensorConfiguration {
 public:
-  static void saveWifiConfiguration( String ssid, String password);
-  static void  saveMQTTConfiguration(String s_server, int port, bool useSSL, String s_user,  String s_password, String s_sensorName);
+  static void saveWifiConfiguration( const String ssid, const String password);
+  static void saveMQTTConfiguration(const String s_server,const int port, const bool useSSL, const String s_user,  const String s_password, const String s_boardName);
   static bool isWifiConfigured();
   static bool connectToWifi();
   static ConfigurationStruct getConfig();

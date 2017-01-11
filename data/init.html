@@ -180,21 +180,21 @@
 				<p>Set up your MQTT connection
 				</p>
 				<form id="MQTTForm">
-					<input name="server" type=text autocorrect=off autocapitalize=none placeholder='MQTT Server' />
-					<input name="port" type=text autocorrect=off autocapitalize=none autocomplete=off placeholder=Port />
+					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder='MQTT Server' />
+					<input id="port" name="port" type="number" placeholder=Port />
 					<label for="ssl">
-						<input id="ssl" type=checkbox autocorrect=off autocapitalize=none autocomplete=off name=ssl />
+						<input id="ssl" type="checkbox" name="ssl" />
 						Use SSL
 					</label>
-					<input id="user" type=text autocorrect=off autocapitalize=none placeholder='User' />
-					<input id="password" type=password autocorrect=off autocapitalize=none autocomplete=off placeholder='Password' />
-					<input id="sensor_name" type=text autocorrect=off autocapitalize="none" placeholder="Sensor name" />
+					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
+					<input id="password" name="password" type="password" placeholder="Password" />
+					<input id="board_name" name="board_name" type="text" placeholder="Board name" />
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
 			</div>
 			<div id="Finish" class="tabcontent">
 				<h3>Configuration Saved</h3>
-				<p>Your sensor is now configured. Have fun.</p>
+				<p>Your board is now configured. Have fun.</p>
 			</div>
 		</div>
 		<div id="StatusWrapper">
@@ -218,7 +218,10 @@
 			tablinks[i].className = tablinks[i].className.replace(" active", "");
 		}
 		$('#'+tab).style.display = "block";
-		$('#'+tab+"Tab").className += " active";
+		var tab = $('#'+tab+"Tab");
+		if (tab) {
+			tab.className += " active";
+		}
 	}
 	function getXhr() {
 		if (window.XMLHttpRequest) {
@@ -317,6 +320,7 @@
 		btnN.onclick = scanNetworks;
 	}
 	function loadData() {
+		var xhr = getXhr();
 		xhr.onload = function() {
 			var config = JSON.parse(xhr.responseText);
 			$('#ssid').value = config.ssid;
@@ -326,7 +330,7 @@
 			$('#ssl').checked = config.ssl;
 			$('#user').value = config.user;
 			$('#password').value = config.mpassword;
-			$('#sensor_name').value = config.sensor_name;
+			$('#board_name').value = config.board_name;
 		}
 		xhr.open("GET","load");
 		xhr.setRequestHeader('Accept', 'application/json');
