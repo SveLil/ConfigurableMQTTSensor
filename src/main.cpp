@@ -3,11 +3,12 @@
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <SimpleDHT.h>
-#include <SensorConfiguration.h>
-#include <ConfigurationServer.h>
 #include <FS.h>
 #include <ESP8266WebServer.h>
-
+#include <PubSubClient.h>
+#include "BoardConfiguration.h"
+#include "ConfigurationServer.h"
+#include "Sensor.h"
 
 const byte DNS_PORT = 53;
 const char *domain = "esp.sensor";
@@ -16,7 +17,10 @@ DNSServer dnsServer;
 IPAddress apIP(192, 168, 4, 1);
 IPAddress netMsk(255, 255, 255, 0);
 bool dnsServerStarted = false;
+bool mqttRunning = false;
 ConfigurationServer server;
+PubSubClient client;
+BoardConfiguration& config = BoardConfiguration::getInstance();
 
 void setup() {
   Serial.begin(115200);
@@ -32,7 +36,11 @@ void setup() {
       Serial.println("File init.html not found!");
     }
   }
-  if (false) { //!SensorConfiguration::isWifiConfigured()
+
+  uint32 realSize = ESP.getFlashChipRealSize();
+  Serial.printf("Flash real size: %u\n\n", realSize);
+
+  if (!config.connectToWifi()) {
     Serial.print("Configuring access point...");
     WiFi.softAPConfig(apIP, apIP, netMsk);
     String ssid = "ESP Sensor " + String(ESP.getChipId());
@@ -46,10 +54,10 @@ void setup() {
     bool dnsStarted = dnsServer.start(DNS_PORT, domain, myIP);
     Serial.println("dnsServer started: " + String(dnsStarted));
     dnsServerStarted = true;
-  } else {
-    SensorConfiguration::connectToWifi();
   }
   server.start();
+
+  mqttRunning = config.connectToMQTT(client);
 }
 
 void loop() {
@@ -57,4 +65,12 @@ void loop() {
     dnsServer.processNextRequest();
   }
   server.handleClient();
+  if (mqttRunning) {
+    Sensor** sensors = config.getSensors();
+    int sensorCount = config.getSensorCount();
+    for (int i=0; i<sensorCount; i++) {
+      Sensor* current = sensors[i];
+      current->read();
+    }
+  }
 }

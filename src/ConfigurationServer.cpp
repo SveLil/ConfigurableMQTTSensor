@@ -1,12 +1,13 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <ConfigurationServer.h>
-#include <SensorConfiguration.h>
+#include <BoardConfiguration.h>
 
 ESP8266WebServer webServer = ESP8266WebServer(80);
 const int saveTypeWiFi = 0;
 const int saveTypeMQTT = 1;
 const String MASK_PASSWORD = "SAVED";
+BoardConfiguration& boardConfig = BoardConfiguration::getInstance();
 
 void handleNotFound() {
   Serial.println("Not found:" + webServer.uri());
@@ -41,21 +42,21 @@ void handleSaveMQTT() {
   bool useSSL = webServer.arg("useSSL") == "true";
   String password = webServer.arg("password");
   if (password == MASK_PASSWORD) {
-    ConfigurationStruct config = SensorConfiguration::getConfig();
+    ConfigurationStruct config = boardConfig.getConfig();
     password = config.mqttConfig.password;
   }
 
-  SensorConfiguration::saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"));
+  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"));
   handleSave(saveTypeMQTT);
 }
 
 void handleSaveWiFi() {
   String password = webServer.arg("wifi_password");
   if (password == MASK_PASSWORD) {
-    ConfigurationStruct config = SensorConfiguration::getConfig();
+    ConfigurationStruct config = boardConfig.getConfig();
     password = config.wifiConfig.password;
   }
-  SensorConfiguration::saveWifiConfiguration( webServer.arg("ssid"), password);
+  boardConfig.saveWifiConfiguration( webServer.arg("ssid"), password);
   handleSave(saveTypeWiFi);
 }
 
@@ -90,7 +91,7 @@ void handleScan() {
 void handleLoad() {
   String json = "{";
   boolean first = true;
-  ConfigurationStruct config = SensorConfiguration::getConfig();
+  ConfigurationStruct config = boardConfig.getConfig();
   if (config.status > 0) {
     json += "\"ssid\": \"" + String(config.wifiConfig.ssid) + "\", \"wpassword\": \""+MASK_PASSWORD+"\"";
     if (config.status > 1) {
