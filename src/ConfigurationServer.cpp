@@ -20,23 +20,6 @@ void handleWeb() {
   size_t sent = webServer.streamFile(file, "text/html");
 }
 
-void handleSave(int saveType) {
-  String saveTypeString = "unknown";
-  switch (saveType) {
-    case saveTypeWiFi: saveTypeString = "WiFi"; break;
-    case saveTypeMQTT: saveTypeString = "MQTT"; break;
-    default: Serial.println("Unknown save type: " + String(saveType));
-  }
-  Serial.println("Handle Save: " + webServer.uri() + " - " + saveTypeString);
-  String msg = "Argument count: " + String(webServer.args());
-  msg += "\n";
-  for ( uint8_t i = 0; i < webServer.args(); i++ ) {
-    msg += " " + webServer.argName ( i ) + ": " + webServer.urlDecode(webServer.arg ( i )) + "\n";
-  }
-  Serial.println(msg);
-  webServer.send(200, "Content-type: application/json", "{\"success\": true}");
-}
-
 void handleSaveMQTT() {
   int port = webServer.arg("port").toInt();
   bool useSSL = webServer.arg("useSSL") == "true";
@@ -47,7 +30,34 @@ void handleSaveMQTT() {
   }
 
   boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"));
-  handleSave(saveTypeMQTT);
+  webServer.send(200, "Content-type: application/json", "{\"success\": true}");
+}
+
+void handleSaveSensor() {
+  Serial.println("Handle Save: " + webServer.uri() + " - Sensor");
+  String msg = "Argument count: " + String(webServer.args());
+  msg += "\n";
+  for ( uint8_t i = 0; i < webServer.args(); i++ ) {
+    msg += " " + webServer.argName ( i ) + ": " + webServer.urlDecode(webServer.arg ( i )) + "\n";
+  }
+  Serial.println(msg);
+
+  int sensorId = webServer.arg("sensorId").toInt();
+  int pin = webServer.arg("pin").toInt();
+  String sensorTypeString = webServer.arg("sensorType");
+  SensorType sensorType;
+  if (sensorTypeString == "DHT22") {
+     sensorType = DHT22_COMPATIBLE;
+  } else if (sensorTypeString == "Analog") {
+    sensorType = SIMPLE_ANALOG;
+  } else if (sensorTypeString == "Digital") {
+     sensorType = SIMPLE_DIGITAL;
+  } else {
+    webServer.send(500, "application/json","{\"success\": true, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
+  }
+
+  boardConfig.saveSensorConfiguration( sensorId, sensorType, pin);
+  webServer.send(200, "Content-type: application/json", "{\"success\": true, \"sensorId\": "+String(sensorId)+"}");
 }
 
 void handleSaveWiFi() {
@@ -57,7 +67,7 @@ void handleSaveWiFi() {
     password = config.wifiConfig.password;
   }
   boardConfig.saveWifiConfiguration( webServer.arg("ssid"), password);
-  handleSave(saveTypeWiFi);
+  webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
 void handleScan() {

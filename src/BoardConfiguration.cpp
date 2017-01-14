@@ -66,7 +66,7 @@ BoardConfiguration& BoardConfiguration::getInstance() {
   return BoardConfiguration;
 }
 
-void BoardConfiguration::saveWifiConfiguration(String s_ssid,  String s_password) {
+void BoardConfiguration::saveWifiConfiguration(const String& s_ssid, const String& s_password) {
   Serial.println("Saving WiFi configuration");
   s_ssid.toCharArray(data.wifiConfig.ssid,32);
   s_password.toCharArray(data.wifiConfig.password,64);
@@ -82,7 +82,7 @@ void BoardConfiguration::saveWifiConfiguration(String s_ssid,  String s_password
   save();
 }
 
-void BoardConfiguration::saveMQTTConfiguration(String s_server, int port, bool useSSL, String s_user,  String s_password, String s_boardName) {
+void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int port, const bool useSSL, const String& s_user, const String& s_password, const String& s_boardName) {
   Serial.println("Saving MQTT configuration");
   s_server.toCharArray(data.mqttConfig.server,256);
   data.mqttConfig.port=port;
@@ -111,7 +111,7 @@ bool BoardConfiguration::connectToWifi() {
   return true;
 }
 
-bool BoardConfiguration::connectToMQTT(PubSubClient client) {
+bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
   if (data.status < 2) {
     return false;
   }
@@ -130,25 +130,62 @@ ConfigurationStruct BoardConfiguration::getConfig() {
   return data;
 }
 
-void BoardConfiguration::initSensors(PubSubClient client) {
-  if (sensorsInitialized) {
-    for (int i = 0; i<createdSensorCount; i++) {
-      delete sensors[i];
-    }
-    delete[] sensors;
-  }
-  sensors = new Sensor*[data.sensorCount];
-  for (int i = 0; i<data.sensorCount; i++) {
-    SensorConfiguration sConfig = sensorConfig[i];
-    if (sConfig.sensorType == DHT22) {
-      sensors[i] = new DHTSensor(client, data.mqttConfig.boardName, sConfig);
-    }
+Sensor* getSensor(SensorConfiguration sConfig) {
+  if (sConfig.sensorType == DHT22) {
+    return new DHTSensor(sConfig);
   }
 }
 
+void BoardConfiguration::initSensors(int index=-1) {
+  if (index>-1 && !sensorsInitialized) {
+    //If sensors aren't initilized yet, init all
+    index = -1;
+  }
+  if (index > -1) {
+    delete sensors[index];
+    SensorConfiguration sConfig = sensorConfig[index];
+    sensors[index] = getSensor(sConfig);
+  } else {
+    if (sensorsInitialized) {
+        for (int i = 0; i<createdSensorCount; i++) {
+          delete sensors[i];
+        }
+        delete[] sensors;
+    }
+    sensors = new Sensor*[data.sensorCount];
+    for (int i = 0; i<data.sensorCount; i++) {
+      SensorConfiguration sConfig = sensorConfig[i];
+      sensors[i] = getSensor(sConfig);
+    }
+  }
+  sensorsInitialized = true;
+}
+
 Sensor** BoardConfiguration::getSensors() {
+  if (!sensorsInitialized) {
+    initSensors();
+  }
   return sensors;
 }
 int BoardConfiguration::getSensorCount() {
   return data.sensorCount;
+}
+
+void BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType& sensorType,const int pin) {
+  if (sensorId < 0 || sensorId >= getSensorCount()) {
+    //New sensor
+    SensorConfiguration* newSensorConfig = new SensorConfiguration[data.sensorCount+1];
+    memcpy(newSensorConfig, sensorConfig, sizeof(SensorConfiguration)*data.sensorCount);
+    newSensorConfig[data.sensorCount].pin = pin;
+    newSensorConfig[data.sensorCount].sensorType = sensorType;
+    sensorId = data.sensorCount;
+    data.sensorCount++;
+    delete [] sensorConfig;
+    sensorConfig = newSensorConfig;
+  } else {
+    //Existing sensor
+    sensorConfig[sensorId].pin = pin;
+    sensorConfig[sensorId].sensorType = sensorType;
+    initSensors(sensorId);
+  }
 }

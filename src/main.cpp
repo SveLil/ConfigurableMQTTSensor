@@ -2,12 +2,12 @@
 
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
-#include <SimpleDHT.h>
 #include <FS.h>
 #include <ESP8266WebServer.h>
 #include <PubSubClient.h>
 #include "BoardConfiguration.h"
 #include "ConfigurationServer.h"
+#include "MQTTPublisher.h"
 #include "Sensor.h"
 
 const byte DNS_PORT = 53;
@@ -21,6 +21,7 @@ bool mqttRunning = false;
 ConfigurationServer server;
 PubSubClient client;
 BoardConfiguration& config = BoardConfiguration::getInstance();
+MQTTPublisher mqttPublisher = MQTTPublisher(client);
 
 void setup() {
   Serial.begin(115200);
@@ -66,11 +67,6 @@ void loop() {
   }
   server.handleClient();
   if (mqttRunning) {
-    Sensor** sensors = config.getSensors();
-    int sensorCount = config.getSensorCount();
-    for (int i=0; i<sensorCount; i++) {
-      Sensor* current = sensors[i];
-      current->read();
-    }
+    mqttPublisher.publish();
   }
 }
