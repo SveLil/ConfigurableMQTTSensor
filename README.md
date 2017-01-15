@@ -1,3 +1,20 @@
 # mqtt8266Sensor
 
 And ESP8266 based sensor that will send its updates to a MQTT server
+
+## Usage
+
+Build and flash to your esp8266 board. When powered on, the board will open a new access point, named "ESP Sensor <ChipId>". After connecting to it, open a web browser and navigate to http://esp.sensor
+
+You can then enter the credentials of your network:
+![wifi credentials screenshot](https://github.com/SveLil/mqtt8266Sensor/raw/master/doc/wifi.png "wifi credentials Screenshot")
+
+You can either fill in the SSID by hand or scan for existing access points.
+
+After your sensor is connected to a network, you can enter the information for the MQTT server:
+![mqtt information screenshot](https://github.com/SveLil/mqtt8266Sensor/raw/master/doc/mqtt.png "mqtt information")
+
+The board name is used as a path element for all sensors connected to the ESP8266.
+
+On the third tab, you can add/edit/delete information about the sensors that are connected to your board:
+![empty sensor information screenshot](https://github.com/SveLil/mqtt8266Sensor/raw/master/doc/sensor_empty.png "empty sensor information information")
