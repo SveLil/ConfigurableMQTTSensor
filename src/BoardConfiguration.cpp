@@ -26,10 +26,9 @@ BoardConfiguration::BoardConfiguration() {
     delay(500);
   } else {
     EEPROM.get(loc, data);
-    loc += sizeof(data.wifiConfig);
+    //loc += sizeof(data);
     Serial.println("Loaded");
     if (data.status > 1) {
-      loc += sizeof(data.mqttConfig);
     }
     debugPrintConfig(true, true, data.status > 1);
   }
@@ -147,10 +146,10 @@ void BoardConfiguration::initSensors(int index=-1) {
     sensors[index] = getSensor(sConfig);
   } else {
     if (sensorsInitialized) {
-        for (int i = 0; i<createdSensorCount; i++) {
-          delete sensors[i];
-        }
-        delete[] sensors;
+      for (int i = 0; i<createdSensorCount; i++) {
+        delete sensors[i];
+      }
+      delete[] sensors;
     }
     sensors = new Sensor*[data.sensorCount];
     for (int i = 0; i<data.sensorCount; i++) {
@@ -187,5 +186,14 @@ void BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType
     sensorConfig[sensorId].pin = pin;
     sensorConfig[sensorId].sensorType = sensorType;
     initSensors(sensorId);
+  }
+}
+
+void BoardConfiguration::deleteSensorConfiguration(const int sensorId) {
+  if (sensorId < 0 || sensorId >= getSensorCount()) {
+  } else {
+    //Sensor exists
+    //Mark sensor config as empty
+    sensorConfig[sensorId].sensorType = NO_SENSOR;
   }
 }

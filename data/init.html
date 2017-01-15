@@ -2,6 +2,7 @@
 <html>
 <head>
 	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<title>WiFi Login</title>
 	<style type=text/css>
 
@@ -20,12 +21,14 @@
 		overflow: hidden;
 		width: 95%;
 		max-width: 640px;
+		margin-bottom: -15px;
 	}
 
 	ul.tab li {
 		float: left;
 		padding: 0px 1px;
 		top: 2px;
+		margin-bottom: 14px;
 	}
 
 	ul.tab li a {
@@ -107,6 +110,38 @@
 		right: 18px;
 		z-index: 5;
 	}
+	#sensorList {
+		padding: 0px 20px;
+		margin-bottom: 10px;
+	}
+	.sensor {
+		margin: 15px 0px;
+		padding: 10px 0px;
+		border: 1px solid #ccc;
+	}
+	.sensor * {
+		display: block;
+		padding: 5px 15px;
+		width: 100%;
+		box-sizing: border-box;
+    font-size: 18px;
+	}
+	.sensor > label {
+		position: relative;
+		margin: 10px 0px;
+	}
+	.sensor > label > input {
+		position: absolute;
+		right: 15px;
+		top: 0px;
+		width: 80%;
+	}
+	.smallBtn {
+		width: 45%;
+		padding: 10px;
+		font-size: 14px;
+	}
+
 	#StatusWrapper {
 		height: 58px;
 	}
@@ -119,6 +154,14 @@
 	button {
 		background-color: #5284BB;
 		color: #FFF;
+		padding: 15px;
+		margin-bottom: 10px;
+		border: 1px solid #ccc;
+		width: 100%;
+		box-sizing: border-box;
+	}
+	button:disabled {
+		background-color: #ddd;
 	}
 	select {
 		padding: 15px;
@@ -151,7 +194,7 @@
 		<ul class="tab">
 			<li><a href="javascript:void(0)" class="tablinks" id="WiFiTab" onclick="openTab('WiFi')">WiFi</a></li>
 			<li><a href="javascript:void(0)" class="tablinks" id="MQTTTab" onclick="openTab('MQTT')">MQTT</a></li>
-			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="SensorsTab" onclick="openTab('Sensors')">Sensors</a></li>
+			<li><a href="javascript:void(0)" class="tablinks" id="SensorsTab" onclick="openTab('Sensors')">Sensors</a></li>
 			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="AboutTab" onclick="openTab('About')">About</a></li>
 		</ul>
 	</div>
@@ -159,10 +202,9 @@
 		<div id="tabs">
 			<div id="WiFi" class="tabcontent">
 				<h2>WiFi</h2>
-				<p>Set up your wifi connection
-				</p>
+				<p>Set up your wifi connection</p>
 				<form id="WiFiForm">
-					<button id="getNetworks"type="button">Scan for networks</button>
+					<button id="getNetworks" type="button">Scan for networks</button>
 					<div id="apcombo" class="combo" style="display: none;" >
 						<select id="aplist" onchange="{
 							var aplist = $('#aplist');
@@ -174,11 +216,9 @@
 					<button id="submitWiFi" type="button">Save WiFi</button>
 				</form>
 			</div>
-
 			<div id="MQTT" class="tabcontent">
 				<h2>MQTT</h2>
-				<p>Set up your MQTT connection
-				</p>
+				<p>Set up your MQTT connection</p>
 				<form id="MQTTForm">
 					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder='MQTT Server' />
 					<input id="port" name="port" type="number" placeholder=Port />
@@ -192,6 +232,27 @@
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
 			</div>
+			<div id="Sensors" class="tabcontent">
+				<h2>Sensors</h2>
+				<p>Configure the sensors that are connected to the board</p>
+				<div id="sensorList">
+				</div>
+				<form id="SensorsForm">
+					<div id="typeList" class="combo">
+						<select id="tlSelect" onchange="{
+							var tlSelect = $('#tlSelect');
+							$('#sensorType').value = tlSelect.options[tlSelect.selectedIndex].value;
+						}"><option value="DHT22">DHT22</option><option value="Analog">Analog</option><option value="Digital">Digital</option></select>
+						<input id="sensorType" name="sensorType" type="text" style="display: none;" value="DHT22" />
+					</div>
+					<input id="pin" name="pin" type="number" placeholder="Pin" />
+					<input id="sensorId" name="sensorId" type="hidden" value="-1"/>
+					<button id="saveSensor" type="button">Save sensor</button>
+				</form>
+				<form>
+					<button id="addCancelSensor" type="button" disabled="true">Add sensor</button>
+				</form>
+			</div>
 			<div id="Finish" class="tabcontent">
 				<h3>Configuration Saved</h3>
 				<p>Your board is now configured. Have fun.</p>
@@ -203,8 +264,10 @@
 	</div>
 	<script>
 	var $$ = function (selector) { return document.querySelectorAll(selector); };
+	var $n = function (selector) { return document.getElementsByName(selector); };
 	var $ = function (selector) { return $$(selector)[0]};
 	var btnN = $('#getNetworks');
+	var debug = false;
 	function openTab(tab) {
 		var i, tabcontent, tablinks;
 		tabcontent = $("#tabs").childNodes;
@@ -256,10 +319,14 @@
 			params.push(param);
 		}
 		var xhr = getXhr();
-		xhr.onload = callback.bind(xhr);
+		xhr.onload = callback.bind(undefined, xhr);
 		xhr.open("POST","save"+name);
 		xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 		xhr.setRequestHeader('Accept', 'application/json');
+		if (debug) {
+			console.log(params.join('&'));
+			xhr.onload();
+		}
 		xhr.send(params.join('&'));
 	}
 	function submitWiFi() {
@@ -297,10 +364,7 @@
 				});
 			}
 			for (var i=0; i<networks.length; i++) {
-				var option = document.createElement("option");
-				option.text = networks[i].ssid + " (" + networks[i].type +")";
-				option.value = networks[i].ssid;
-				select.add(option);
+				select.add(addOption(networks[i].ssid + " (" + networks[i].type +")"),  networks[i].ssid);
 			}
 		};
 		xhr.open("GET","scan");
@@ -313,11 +377,160 @@
 		hide('#apcombo');
 		show('#ssid');
 	}
+	function addOption(value, text) {
+		var option = document.createElement('option');
+		option.text = value;
+		option.value = text;
+		return option;
+	}
+	function createElement(type, text) {
+		var div = document.createElement(type);
+		div.innerText = text;
+		return div;
+	}
+	function cancelSensor() {
+		hide('#SensorsForm');
+		var addSensorBtn=$('#addCancelSensor');
+		addSensorBtn.innerText ="Add sensor";
+		addSensorBtn.onclick = addSensor;
+	}
+	function addSensor() {
+		show('#SensorsForm');
+		var addSensor=$('#addCancelSensor');
+		addSensor.innerText ="Cancel";
+		addSensor.onclick = cancelSensor;
+	}
+	function deleteSensor() {
+		var xhr = getXhr();
+		var cNodes = this.childNodes;
+		var sensorId;
+		for (var i=0; i<cNodes.length; i++) {
+			if (cNodes[i].name=="sensorId") {
+				sensorId = cNodes[i].value;
+				break;
+			}
+		}
+		this.parentElement.removeChild(this);
+		xhr.open("DELETE","sensor");
+		xhr.setRequestHeader('Accept', 'application/json');
+		xhr.send(sensorId);
+		return false;
+	}
+	function disableForm(form) {
+		var els = form.elements;
+		for (var i=0; i<els.length; i++) {
+			els[i].disabled = els[i].tagName == "INPUT";
+		}
+	}
+	function editSensor(form) {
+		var els = form.elements;
+		var editBtn;
+		var delBtn;
+		for (var i=0; i<els.length; i++) {
+			els[i].disabled = false;
+			if (els[i].name == "editBtn") {
+				editBtn = els[i];
+				editBtn.textContent = "Save sensor";
+			} else if (els[i].name == "delBtn") {
+				delBtn = els[i];
+				delBtn.textContent = "Cancel";
+			}
+		}
+		var delFn = delBtn.onclick;
+		var editFn = editBtn.onclick;
+		delBtn.onclick = function() {
+			disableForm(form);
+			delBtn.textContent = "Delete sensor";
+			delBtn.onclick = delFn;
+			editBtn.textContent = "Edit sensor";
+			editBtn.onclick = editFn;
+			return false;
+		}
+		editBtn.onclick = function () {
+			disableForm(form);
+			delBtn.textContent = "Delete sensor";
+			delBtn.onclick = delFn;
+			editBtn.textContent = "Edit sensor";
+			editBtn.onclick = editFn;
+			postForm('Sensors', function(xhr) {
+			});
+			return false;
+		}
+		return false;
+	}
+	function saveSensor(form) {
+		if (!form) {
+			form = $('#SensorsForm');
+		}
+		postForm('Sensors', function(xhr) {
+			//xhr contains sensorId;
+			if (debug) {
+				xhr = {};
+				xhr.responseText = "{\"success\": true, \"sensorId\": 2}";
+			}
+			var response = JSON.parse(xhr.responseText);
+			if (!response.success) {
+				//display error;
+			}
+			var sensorId = response.sensorId;
+			var sList = $('#sensorList');
+			var sDiv = document.createElement('form');
+			sDiv.className = "sensor";
+			var labelType = createElement("label", "Type:");
+			sDiv.append(labelType);
+			var input =  document.createElement("input");
+			input.value = $('#sensorType').value;
+			input.name = "sensorType";
+			input.disabled = true;
+			labelType.append(input);
+
+			var labelPin = createElement("label", "Pin:");
+			sDiv.append(labelPin);
+			input =  document.createElement("input");
+			input.value =  $('#pin').value;
+			input.disabled = true;
+			input.name = "pin";
+			labelPin.append(input);
+
+			input =  document.createElement("input");
+			input.type = "hidden";
+			input.name = "sensorId";
+			input.value = sensorId;
+			sDiv.append(input);
+
+			var editBtn = createElement("button", "Edit sensor");
+			editBtn.className = "smallBtn";
+			editBtn.style = "float: left;";
+			editBtn.name = "editBtn";
+			editBtn.onclick = editSensor.bind(undefined, sDiv);
+			var btnDiv = document.createElement('div');
+			var delBtn = createElement("button", "Delete sensor");
+			delBtn.className = "smallBtn";
+			delBtn.style = "float: right;";
+			delBtn.name = "delBtn";
+			delBtn.onclick = deleteSensor.bind(sDiv);
+			btnDiv.append(editBtn);
+			btnDiv.append(delBtn);
+			btnDiv.style = "height: 40px; border: 0px;";
+			sDiv.append(btnDiv);
+			sList.append(sDiv);
+			var addSensorBtn =$('#addCancelSensor');
+			addSensorBtn.innerText ="Add Sensor";
+			addSensorBtn.disabled = false;
+			addSensorBtn.onclick = addSensor;
+
+			hide('#SensorsForm');
+		});
+	}
+
 	window.onload = function() {
 		openTab('WiFi');
 		$('#submitWiFi').onclick = submitWiFi;
 		$('#submitMQTT').onclick = submitMQTT;
+		$('#addCancelSensor').onclick = addSensor;
+		$('#saveSensor').onclick = saveSensor;
 		btnN.onclick = scanNetworks;
+		debug = document.location.protocol == "file:";
 	}
 	function loadData() {
 		var xhr = getXhr();

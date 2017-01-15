@@ -2,9 +2,10 @@
 #define CONFIG_STRUCTS
 
 enum SensorType {
+  NO_SENSOR,
   DHT22_COMPATIBLE,
   SIMPLE_ANALOG,
-  SIMPLE_DIGITAL,
+  SIMPLE_DIGITAL
 };
 
 struct WiFiConfiguration {

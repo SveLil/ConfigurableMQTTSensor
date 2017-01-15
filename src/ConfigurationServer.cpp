@@ -33,6 +33,12 @@ void handleSaveMQTT() {
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
+void handleDeleteSensor() {
+  int sensorId = webServer.arg("sensorId").toInt();
+  boardConfig.deleteSensorConfiguration( sensorId );
+  webServer.send(200, "Content-type: application/json", "{\"success\": true}");
+}
+
 void handleSaveSensor() {
   Serial.println("Handle Save: " + webServer.uri() + " - Sensor");
   String msg = "Argument count: " + String(webServer.args());
@@ -47,11 +53,11 @@ void handleSaveSensor() {
   String sensorTypeString = webServer.arg("sensorType");
   SensorType sensorType;
   if (sensorTypeString == "DHT22") {
-     sensorType = DHT22_COMPATIBLE;
+    sensorType = DHT22_COMPATIBLE;
   } else if (sensorTypeString == "Analog") {
     sensorType = SIMPLE_ANALOG;
   } else if (sensorTypeString == "Digital") {
-     sensorType = SIMPLE_DIGITAL;
+    sensorType = SIMPLE_DIGITAL;
   } else {
     webServer.send(500, "application/json","{\"success\": true, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
   }
@@ -122,6 +128,8 @@ void ConfigurationServer::start() {
   webServer.on("/saveWiFi", HTTP_POST, handleSaveWiFi);
   webServer.on("/scan", HTTP_GET, handleScan);
   webServer.on("/load", HTTP_GET, handleLoad);
+  webServer.on("/sensors", HTTP_DELETE, handleDeleteSensor);
+  webServer.on("/sensors", HTTP_POST, handleSaveSensor);
   webServer.begin();
   Serial.println("HTTP server started");
 }
