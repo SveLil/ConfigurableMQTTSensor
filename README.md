@@ -1,4 +1,5 @@
 # mqtt8266Sensor
+[![Build Status](https://travis-ci.org/SveLil/mqtt8266Sensor.svg?branch=master)](https://travis-ci.org/SveLil/mqtt8266Sensor)
 
 And ESP8266 based sensor that will send its updates to a MQTT server
 
