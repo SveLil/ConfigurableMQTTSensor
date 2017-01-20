@@ -1,5 +1,5 @@
 #include <Arduino.h>
-
+#include <Esp.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <FS.h>
@@ -26,6 +26,10 @@ MQTTPublisher mqttPublisher = MQTTPublisher(client);
 void setup() {
   Serial.begin(115200);
   Serial.println();
+  Serial.println(ESP.getResetReason());
+  Serial.println(ESP.getResetInfo());
+  rst_info* rInfo = ESP.getResetInfoPtr();
+
   if (!SPIFFS.begin())
   {
     Serial.println("Failed to mount file system");
@@ -61,12 +65,19 @@ void setup() {
   mqttRunning = config.connectToMQTT(client);
 }
 
+int i = 0;
 void loop() {
+  Serial.flush();
   if (dnsServerStarted) {
     dnsServer.processNextRequest();
   }
   server.handleClient();
   if (mqttRunning) {
-    mqttPublisher.publish();
+    i++;
+    if (i % 10 == 0) {
+      Serial.print(".");
+      mqttPublisher.publish();
+    }
   }
+  delay(100);
 }

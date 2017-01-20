@@ -1,9 +1,12 @@
 #include "DHTSensor.h"
-#include "DHT.h"
+#include <DHT.h>
+#include <Adafruit_Sensor.h>
 
-DHTSensor::DHTSensor(SensorConfiguration &sensorConfig) : _sensorConfig(sensorConfig), dht(sensorConfig.pin, DHT22) {
+DHTSensor::DHTSensor(const SensorConfiguration &sensorConfig) : _sensorConfig(sensorConfig), dht(sensorConfig.pin, DHT22) {
   dht.begin();
 };
+DHTSensor::~DHTSensor() {
+}
 
 int DHTSensor::getSensorCount() {
   return 2;

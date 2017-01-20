@@ -128,8 +128,8 @@ void ConfigurationServer::start() {
   webServer.on("/saveWiFi", HTTP_POST, handleSaveWiFi);
   webServer.on("/scan", HTTP_GET, handleScan);
   webServer.on("/load", HTTP_GET, handleLoad);
-  webServer.on("/sensors", HTTP_DELETE, handleDeleteSensor);
-  webServer.on("/sensors", HTTP_POST, handleSaveSensor);
+  webServer.on("/deleteSensor", HTTP_POST, handleDeleteSensor);
+  webServer.on("/saveSensor", HTTP_POST, handleSaveSensor);
   webServer.begin();
   Serial.println("HTTP server started");
 }

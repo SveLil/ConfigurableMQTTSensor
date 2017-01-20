@@ -25,11 +25,11 @@ private:
   ConfigurationStruct data;
   SensorConfiguration* sensorConfig;
   Sensor* *sensors;
-  int createdSensorCount;
+  int createdSensorCount = 0;
 
   void operator=(BoardConfiguration const&); // Don't implement
   void save();
-  bool sensorsInitialized;
+  bool sensorsInitialized = false;
   void initSensors(int index);
   void debugPrintConfig(bool printData, bool printWifi, bool printMQTT);
 };

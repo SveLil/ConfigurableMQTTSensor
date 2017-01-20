@@ -32,6 +32,8 @@ BoardConfiguration::BoardConfiguration() {
     }
     debugPrintConfig(true, true, data.status > 1);
   }
+  data.sensorCount = 0;
+  sensorsInitialized = false;
 }
 
 void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool printMQTT) {
@@ -112,6 +114,7 @@ bool BoardConfiguration::connectToWifi() {
 
 bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
   if (data.status < 2) {
+    Serial.println("MQTT not configured");
     return false;
   }
   if (data.mqttConfig.useSSL) {
@@ -122,16 +125,23 @@ bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
     client.setClient(net);
   }
   client.setServer(data.mqttConfig.server, data.mqttConfig.port);
-  return client.connect(data.mqttConfig.boardName, data.mqttConfig.user, data.mqttConfig.password);
+  Serial.println("Connect MQTT");
+  bool result = client.connect(data.mqttConfig.boardName, data.mqttConfig.user, data.mqttConfig.password);
+  Serial.println("Connection: " + String(result));
+  return result;
 }
 
 ConfigurationStruct BoardConfiguration::getConfig() {
   return data;
 }
 
-Sensor* getSensor(SensorConfiguration sConfig) {
-  if (sConfig.sensorType == DHT22) {
+Sensor* getSensor(const SensorConfiguration &sConfig) {
+  if (sConfig.sensorType == DHT22_COMPATIBLE) {
+    Serial.println("Created DHT22 sensor");
     return new DHTSensor(sConfig);
+  } else {
+    Serial.println("Unknown sensor: " + String(sConfig.sensorType) + " not: " + String(DHT22_COMPATIBLE));
+    return NULL;
   }
 }
 
@@ -141,28 +151,41 @@ void BoardConfiguration::initSensors(int index=-1) {
     index = -1;
   }
   if (index > -1) {
+    Serial.println("Init for index: " + String(index));
     delete sensors[index];
     SensorConfiguration sConfig = sensorConfig[index];
     sensors[index] = getSensor(sConfig);
   } else {
     if (sensorsInitialized) {
+      Serial.println("Delete old array of "+ String(createdSensorCount) + " sensors");
       for (int i = 0; i<createdSensorCount; i++) {
         delete sensors[i];
       }
-      delete[] sensors;
+      if (createdSensorCount > 0) {
+        delete[] sensors;
+      }
     }
+    Serial.println("Creating new sensor array for "+ String(data.sensorCount) + " sensors");
+    Serial.flush();
+    delay(500);
     sensors = new Sensor*[data.sensorCount];
     for (int i = 0; i<data.sensorCount; i++) {
       SensorConfiguration sConfig = sensorConfig[i];
+      Serial.println("create sensor: " + i);
       sensors[i] = getSensor(sConfig);
+      createdSensorCount++;
     }
+    Serial.println("Return");
   }
-  sensorsInitialized = true;
+  sensorsInitialized = data.sensorCount > 0;
 }
 
 Sensor** BoardConfiguration::getSensors() {
   if (!sensorsInitialized) {
+    Serial.println("!sensorsInitialized");
     initSensors();
+  } else {
+    Serial.println("sensorsInitialized");
   }
   return sensors;
 }
@@ -172,21 +195,37 @@ int BoardConfiguration::getSensorCount() {
 
 void BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType& sensorType,const int pin) {
   if (sensorId < 0 || sensorId >= getSensorCount()) {
+    Serial.println("New sensor for pin" + String(pin) + " of type " + String(sensorType));
+    Serial.println("Existing sensors: " + String(data.sensorCount));
     //New sensor
     SensorConfiguration* newSensorConfig = new SensorConfiguration[data.sensorCount+1];
-    memcpy(newSensorConfig, sensorConfig, sizeof(SensorConfiguration)*data.sensorCount);
+    Serial.println("Created new array");
+    if (data.sensorCount > 0) {
+      memcpy(newSensorConfig, sensorConfig, sizeof(SensorConfiguration)*data.sensorCount);
+      Serial.println("copied existing data");
+    } else {
+      Serial.println("skipped copying existing data");
+    }
     newSensorConfig[data.sensorCount].pin = pin;
     newSensorConfig[data.sensorCount].sensorType = sensorType;
+    Serial.println("Set new data");
     sensorId = data.sensorCount;
+    if (data.sensorCount > 0) {
+      Serial.println("Deleted old data");
+      delete [] sensorConfig;
+    }
     data.sensorCount++;
-    delete [] sensorConfig;
+    Serial.println("now " + String(data.sensorCount) + " sensors");
     sensorConfig = newSensorConfig;
   } else {
     //Existing sensor
     sensorConfig[sensorId].pin = pin;
     sensorConfig[sensorId].sensorType = sensorType;
+  }
+  if (sensorsInitialized) {
     initSensors(sensorId);
   }
+  Serial.println("Return");
 }
 
 void BoardConfiguration::deleteSensorConfiguration(const int sensorId) {

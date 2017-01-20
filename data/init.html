@@ -194,7 +194,7 @@
 		<ul class="tab">
 			<li><a href="javascript:void(0)" class="tablinks" id="WiFiTab" onclick="openTab('WiFi')">WiFi</a></li>
 			<li><a href="javascript:void(0)" class="tablinks" id="MQTTTab" onclick="openTab('MQTT')">MQTT</a></li>
-			<li><a href="javascript:void(0)" class="tablinks" id="SensorsTab" onclick="openTab('Sensors')">Sensors</a></li>
+			<li><a href="javascript:void(0)" class="tablinks" id="SensorTab" onclick="openTab('Sensor')">Sensors</a></li>
 			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="AboutTab" onclick="openTab('About')">About</a></li>
 		</ul>
 	</div>
@@ -232,12 +232,12 @@
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
 			</div>
-			<div id="Sensors" class="tabcontent">
+			<div id="Sensor" class="tabcontent">
 				<h2>Sensors</h2>
 				<p>Configure the sensors that are connected to the board</p>
 				<div id="sensorList">
 				</div>
-				<form id="SensorsForm">
+				<form id="SensorForm">
 					<div id="typeList" class="combo">
 						<select id="tlSelect" onchange="{
 							var tlSelect = $('#tlSelect');
@@ -389,13 +389,13 @@
 		return div;
 	}
 	function cancelSensor() {
-		hide('#SensorsForm');
+		hide('#SensorForm');
 		var addSensorBtn=$('#addCancelSensor');
 		addSensorBtn.innerText ="Add sensor";
 		addSensorBtn.onclick = addSensor;
 	}
 	function addSensor() {
-		show('#SensorsForm');
+		show('#SensorForm');
 		var addSensor=$('#addCancelSensor');
 		addSensor.innerText ="Cancel";
 		addSensor.onclick = cancelSensor;
@@ -411,7 +411,7 @@
 			}
 		}
 		this.parentElement.removeChild(this);
-		xhr.open("DELETE","sensor");
+		xhr.open("POST","deleteSensor");
 		xhr.setRequestHeader('Accept', 'application/json');
 		xhr.send(sensorId);
 		return false;
@@ -460,7 +460,7 @@
 	}
 	function saveSensor(form) {
 		if (!form) {
-			form = $('#SensorsForm');
+			form = $('#SensorForm');
 		}
 		postForm('Sensors', function(xhr) {
 			//xhr contains sensorId;
@@ -519,7 +519,7 @@
 			addSensorBtn.disabled = false;
 			addSensorBtn.onclick = addSensor;
 
-			hide('#SensorsForm');
+			hide('#SensorForm');
 		});
 	}
 
