@@ -2,7 +2,7 @@
 #include <ESP8266WiFi.h>
 #include "DHTSensor.h"
 
-const char testString[] = "OK3";
+const char testString[] = "OK4";
 
 BoardConfiguration::BoardConfiguration() {
   // Check status
@@ -11,7 +11,7 @@ BoardConfiguration::BoardConfiguration() {
   // 3: MQTT confiugured => Normal startup. Keep Server running? Show status? Show BoardConfiguration page?
   char s[4];
   int loc = sizeof(s);
-  Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)));
+  Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)+"+"+String(sizeof(sensorConfig))));
   EEPROM.begin(4096);
   EEPROM.get(0, s);
   if (String(s) != String(testString)) {
@@ -26,19 +26,22 @@ BoardConfiguration::BoardConfiguration() {
     delay(500);
   } else {
     EEPROM.get(loc, data);
-    //loc += sizeof(data);
+    loc += sizeof(data);
     Serial.println("Loaded");
     if (data.status > 1) {
     }
     debugPrintConfig(true, true, data.status > 1);
+    if (data.sensorCount > 0) {
+      EEPROM.get(loc, sensorConfig);
+    }
   }
-  data.sensorCount = 0;
   sensorsInitialized = false;
 }
 
 void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool printMQTT) {
   if (printData) {
     Serial.println("data.status : " + String(data.status));
+    Serial.println("data.sensorCount : " + String(data.sensorCount));
   }
   if (printWifi) {
     Serial.println("data.wifiConfig.ssid : " + String(data.wifiConfig.ssid));
@@ -51,6 +54,7 @@ void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool p
     Serial.println("data.mqttConfig.user : " + String(data.mqttConfig.user));
     Serial.println("data.mqttConfig.password : " + String(data.mqttConfig.password));
     Serial.println("data.mqttConfig.boardName : " + String(data.mqttConfig.boardName));
+    Serial.println("data.mqttConfig.readInterval : " + String(data.mqttConfig.readInterval));
   }
 }
 
@@ -61,6 +65,17 @@ void BoardConfiguration::save() {
   Serial.println("Saved");
   debugPrintConfig(true, true, true);
 }
+
+
+void BoardConfiguration::saveSensorConfiguration() {
+  save();
+  int loc = sizeof(testString);
+  loc += sizeof(data);
+  EEPROM.put(loc,sensorConfig);
+  EEPROM.commit();
+  Serial.println("Saved sensorConfig");
+}
+
 
 BoardConfiguration& BoardConfiguration::getInstance() {
   static BoardConfiguration BoardConfiguration;
@@ -79,11 +94,12 @@ void BoardConfiguration::saveWifiConfiguration(const String& s_ssid, const Strin
     data.mqttConfig.boardName[0] = 0;
     data.mqttConfig.useSSL = false;
     data.mqttConfig.port = 0;
+    data.mqttConfig.readInterval = 5;
   }
   save();
 }
 
-void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int port, const bool useSSL, const String& s_user, const String& s_password, const String& s_boardName) {
+void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int port, const bool useSSL, const String& s_user, const String& s_password, const String& s_boardName, const int readInterval) {
   Serial.println("Saving MQTT configuration");
   s_server.toCharArray(data.mqttConfig.server,256);
   data.mqttConfig.port=port;
@@ -91,6 +107,7 @@ void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int
   s_user.toCharArray(data.mqttConfig.user,64);
   s_password.toCharArray(data.mqttConfig.password,64);
   s_boardName.toCharArray(data.mqttConfig.boardName,256);
+  data.mqttConfig.readInterval=readInterval;
   if (data.status < 2) {
     data.status = 2;
   }
@@ -126,10 +143,15 @@ bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
   }
   client.setServer(data.mqttConfig.server, data.mqttConfig.port);
   Serial.println("Connect MQTT");
-  bool result = client.connect(data.mqttConfig.boardName, data.mqttConfig.user, data.mqttConfig.password);
-  Serial.println("Connection: " + String(result));
-  return result;
+  connectedToMQTT = client.connect(data.mqttConfig.boardName, data.mqttConfig.user, data.mqttConfig.password);
+  Serial.println("Connection: " + String(connectedToMQTT));
+  return connectedToMQTT;
 }
+
+bool BoardConfiguration::isConnectedToMQTT() {
+  return connectedToMQTT;
+}
+
 
 ConfigurationStruct BoardConfiguration::getConfig() {
   return data;
@@ -195,28 +217,19 @@ int BoardConfiguration::getSensorCount() {
 
 void BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType& sensorType,const int pin) {
   if (sensorId < 0 || sensorId >= getSensorCount()) {
+    if (data.sensorCount >= 16) {
+      Serial.println("Too many sensors, exiting");
+      return;
+    }
     Serial.println("New sensor for pin" + String(pin) + " of type " + String(sensorType));
     Serial.println("Existing sensors: " + String(data.sensorCount));
     //New sensor
-    SensorConfiguration* newSensorConfig = new SensorConfiguration[data.sensorCount+1];
-    Serial.println("Created new array");
-    if (data.sensorCount > 0) {
-      memcpy(newSensorConfig, sensorConfig, sizeof(SensorConfiguration)*data.sensorCount);
-      Serial.println("copied existing data");
-    } else {
-      Serial.println("skipped copying existing data");
-    }
-    newSensorConfig[data.sensorCount].pin = pin;
-    newSensorConfig[data.sensorCount].sensorType = sensorType;
+    sensorConfig[data.sensorCount].pin = pin;
+    sensorConfig[data.sensorCount].sensorType = sensorType;
     Serial.println("Set new data");
     sensorId = data.sensorCount;
-    if (data.sensorCount > 0) {
-      Serial.println("Deleted old data");
-      delete [] sensorConfig;
-    }
     data.sensorCount++;
     Serial.println("now " + String(data.sensorCount) + " sensors");
-    sensorConfig = newSensorConfig;
   } else {
     //Existing sensor
     sensorConfig[sensorId].pin = pin;
@@ -225,6 +238,7 @@ void BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType
   if (sensorsInitialized) {
     initSensors(sensorId);
   }
+  saveSensorConfiguration();
   Serial.println("Return");
 }
 

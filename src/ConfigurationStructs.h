@@ -20,6 +20,7 @@ struct MQTTConfiguration {
   char user[64];
   char password[64];
   char boardName[256];
+  int readInterval;
 };
 
 struct SensorConfiguration {

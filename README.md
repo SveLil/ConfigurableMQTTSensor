@@ -18,3 +18,14 @@ The board name is used as the base topic for all sensors connected to the ESP826
 
 On the third tab, you can add/edit/delete information about the sensors that are connected to your board:
 ![empty sensor information screenshot](https://github.com/SveLil/mqtt8266Sensor/raw/master/doc/sensor_empty.png "empty sensor information information")
+
+## TODO
+* Cleanup HTML, CSS + JavaScript
+  * Use jQuery (+mobile + UI) or similar to create a nicer UI
+* Cleanup serial output
+* Implement update function through webserver (see [HTTPUpdateServer](https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/src/ESP8266HTTPUpdateServer.cpp))
+* Enable sleep mode
+  * Trough UI
+  * Through physical switch
+* Add physical reset button
+* Add maximum number of sensors in UI

@@ -1,15 +1,28 @@
 #include "MQTTPublisher.h"
 #include "BoardConfiguration.h"
 
-
 MQTTPublisher::MQTTPublisher(PubSubClient &client) : _client(client) {}
-void MQTTPublisher::reconfigure(PubSubClient &client) {
-  _client = client;
-}
+
 void MQTTPublisher::publish() {
   Serial.println("Publish");
   BoardConfiguration& config = BoardConfiguration::getInstance();
   int sensorCount = config.getSensorCount();
+  if (sensorCount == 0) {
+    Serial.println("No sensors, returning");
+    return;
+  }
+  if (!config.isConnectedToMQTT()) {
+    Serial.println("Not connected, returning");
+    return;
+  }
+
+  unsigned long currentMillis = millis();
+  unsigned long interval = config.getConfig().mqttConfig.readInterval;
+  if (currentMillis - lastMillis < interval * 60000) {
+    Serial.println("Not long enough, returning");
+    return;
+  }
+  lastMillis = currentMillis;
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
   Sensor** sensors = config.getSensors();
   Serial.println("got sensors");

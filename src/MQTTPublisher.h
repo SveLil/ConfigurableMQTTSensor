@@ -7,10 +7,12 @@
 class MQTTPublisher {
 public:
   explicit MQTTPublisher(PubSubClient &client);
-  void reconfigure(PubSubClient &client);
   void publish();
 private:
   PubSubClient _client;
   String _boardName;
+  unsigned long lastMillis = 0;
+  bool tickerAttached = false;
+  void checkConfig();
 };
 #endif

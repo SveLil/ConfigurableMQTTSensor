@@ -17,11 +17,12 @@ void handleNotFound() {
 void handleWeb() {
   Serial.println("Handle Web");
   File file = SPIFFS.open("/init.html", "r");
-  size_t sent = webServer.streamFile(file, "text/html");
+  webServer.streamFile(file, "text/html");
 }
 
 void handleSaveMQTT() {
   int port = webServer.arg("port").toInt();
+  int interval = webServer.arg("interval").toInt();
   bool useSSL = webServer.arg("useSSL") == "true";
   String password = webServer.arg("password");
   if (password == MASK_PASSWORD) {
@@ -29,7 +30,7 @@ void handleSaveMQTT() {
     password = config.mqttConfig.password;
   }
 
-  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"));
+  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"),interval);
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -59,11 +60,15 @@ void handleSaveSensor() {
   } else if (sensorTypeString == "Digital") {
     sensorType = SIMPLE_DIGITAL;
   } else {
-    webServer.send(500, "application/json","{\"success\": true, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
+    webServer.send(500, "application/json","{\"success\": false, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
   }
 
   boardConfig.saveSensorConfiguration( sensorId, sensorType, pin);
-  webServer.send(200, "Content-type: application/json", "{\"success\": true, \"sensorId\": "+String(sensorId)+"}");
+  if (sensorId == -1) {
+    webServer.send(500, "Content-type: application/json", "{\"success\": false, \"error\": \"Too many sensors\"}");
+  } else {
+    webServer.send(200, "Content-type: application/json", "{\"success\": true, \"sensorId\": "+String(sensorId)+"}");
+  }
 }
 
 void handleSaveWiFi() {

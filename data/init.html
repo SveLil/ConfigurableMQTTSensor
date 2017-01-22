@@ -195,6 +195,7 @@
 			<li><a href="javascript:void(0)" class="tablinks" id="WiFiTab" onclick="openTab('WiFi')">WiFi</a></li>
 			<li><a href="javascript:void(0)" class="tablinks" id="MQTTTab" onclick="openTab('MQTT')">MQTT</a></li>
 			<li><a href="javascript:void(0)" class="tablinks" id="SensorTab" onclick="openTab('Sensor')">Sensors</a></li>
+			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="SettingsTab" onclick="openTab('Settings')">Settings</a></li>
 			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="AboutTab" onclick="openTab('About')">About</a></li>
 		</ul>
 	</div>
@@ -220,8 +221,8 @@
 				<h2>MQTT</h2>
 				<p>Set up your MQTT connection</p>
 				<form id="MQTTForm">
-					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder='MQTT Server' />
-					<input id="port" name="port" type="number" placeholder=Port />
+					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder="MQTT Server" />
+					<input id="port" name="port" type="number" placeholder="Port" />
 					<label for="ssl">
 						<input id="ssl" type="checkbox" name="ssl" />
 						Use SSL
@@ -229,6 +230,7 @@
 					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
 					<input id="password" name="password" type="password" placeholder="Password" />
 					<input id="board_name" name="board_name" type="text" placeholder="Board name" />
+					<input id="interval" name="interval" type="number" placeholder="Sensor read interval in minutes" />
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
 			</div>
@@ -251,6 +253,24 @@
 				</form>
 				<form>
 					<button id="addCancelSensor" type="button" disabled="true">Add sensor</button>
+				</form>
+			</div>
+			<div id="Settings" class="tabcontent">
+				<h2>Settings</h2>
+				<p>Conigure additional settings of your sensor</p>
+				<form id="SettingsForm">
+					<label for="accesspoint">
+						<input id="accesspoint" type="checkbox" name="accesspoint" />
+						Enable access point
+					</label>
+					<label for="webserver">
+						<input id="webserver" type="checkbox" name="webserver" />
+						Enable webserver (warning: disableling the webserver will make the device unconfigurable)
+					</label>
+					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
+					<input id="password" name="password" type="password" placeholder="Password" />
+					<input id="board_name" name="board_name" type="text" placeholder="Board name" />
+					<button id="submitSettings" type="button">Save Settings</button>
 				</form>
 			</div>
 			<div id="Finish" class="tabcontent">

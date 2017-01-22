@@ -28,7 +28,7 @@ void setup() {
   Serial.println();
   Serial.println(ESP.getResetReason());
   Serial.println(ESP.getResetInfo());
-  rst_info* rInfo = ESP.getResetInfoPtr();
+  // rst_info* rInfo = ESP.getResetInfoPtr();
 
   if (!SPIFFS.begin())
   {
@@ -65,19 +65,9 @@ void setup() {
   mqttRunning = config.connectToMQTT(client);
 }
 
-int i = 0;
 void loop() {
-  Serial.flush();
   if (dnsServerStarted) {
     dnsServer.processNextRequest();
   }
   server.handleClient();
-  if (mqttRunning) {
-    i++;
-    if (i % 10 == 0) {
-      Serial.print(".");
-      mqttPublisher.publish();
-    }
-  }
-  delay(100);
 }
