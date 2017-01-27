@@ -356,7 +356,7 @@
 	}
 	function submitMQTT() {
 		postForm('MQTT', function(xhr) {
-			openTab('Finish');
+			openTab('Sensor');
 		});
 	}
 	function hide(s) {
@@ -472,7 +472,7 @@
 			delBtn.onclick = delFn;
 			editBtn.textContent = "Edit sensor";
 			editBtn.onclick = editFn;
-			postForm('Sensors', function(xhr) {
+			postForm('Sensor', function(xhr) {
 			});
 			return false;
 		}
@@ -482,7 +482,7 @@
 		if (!form) {
 			form = $('#SensorForm');
 		}
-		postForm('Sensors', function(xhr) {
+		postForm('Sensor', function(xhr) {
 			//xhr contains sensorId;
 			if (debug) {
 				xhr = {};
@@ -552,18 +552,23 @@
 		btnN.onclick = scanNetworks;
 		debug = document.location.protocol == "file:";
 	}
+	function setIfDefined(id, value) {
+		if (value !== undefined) {
+			$('#'+id).value = value;
+		}
+	}
 	function loadData() {
 		var xhr = getXhr();
 		xhr.onload = function() {
 			var config = JSON.parse(xhr.responseText);
-			$('#ssid').value = config.ssid;
-			$('#wifi_password').value = config.wpassword;
-			$('#server').value = config.server;
-			$('#port').value = config.port;
-			$('#ssl').checked = config.ssl;
-			$('#user').value = config.user;
-			$('#password').value = config.mpassword;
-			$('#board_name').value = config.board_name;
+			setIfDefined('ssid', config.ssid);
+			setIfDefined('wifi_password', config.wpassword);
+			setIfDefined('server', config.server);
+			setIfDefined('port', config.port);
+			setIfDefined('user', config.user);
+			setIfDefined('password', config.mpassword);
+			setIfDefined('board_name', config.board_name);
+			setIfDefined('interval', config.interval);
 		}
 		xhr.open("GET","load");
 		xhr.setRequestHeader('Accept', 'application/json');

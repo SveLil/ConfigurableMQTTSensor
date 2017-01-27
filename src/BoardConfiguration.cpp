@@ -11,10 +11,17 @@ BoardConfiguration::BoardConfiguration() {
   // 3: MQTT confiugured => Normal startup. Keep Server running? Show status? Show BoardConfiguration page?
   char s[4];
   int loc = sizeof(s);
+  Serial.begin(115200);
   Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)+"+"+String(sizeof(sensorConfig))));
   EEPROM.begin(4096);
   EEPROM.get(0, s);
-  if (String(s) != String(testString)) {
+  bool reset = false;
+  if (digitalRead(16) == HIGH) {
+    //Reset
+    reset = true;
+    Serial.println("Reset settings");
+  }
+  if (reset || String(s) != String(testString)) {
     Serial.println("Clean, because: " + String(s));
     data.wifiConfig.ssid[0] = 0;
     data.wifiConfig.password[0] = 0;
@@ -120,9 +127,10 @@ bool BoardConfiguration::connectToWifi() {
   }
   Serial.println("Configuration found, connecting to " + String(data.wifiConfig.ssid));
   WiFi.begin(data.wifiConfig.ssid, data.wifiConfig.password);
-  while (WiFi.status() != WL_CONNECTED)
+  unsigned long startMillis = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - startMillis < 10000)
   {
-    delay(500);
+    delay(100);
     Serial.print(".");
   }
   Serial.println(WiFi.localIP());
@@ -147,11 +155,6 @@ bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
   Serial.println("Connection: " + String(connectedToMQTT));
   return connectedToMQTT;
 }
-
-bool BoardConfiguration::isConnectedToMQTT() {
-  return connectedToMQTT;
-}
-
 
 ConfigurationStruct BoardConfiguration::getConfig() {
   return data;

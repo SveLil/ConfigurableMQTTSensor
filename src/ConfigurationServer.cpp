@@ -118,7 +118,8 @@ void handleLoad() {
     if (config.status > 1) {
       String ssl = config.mqttConfig.useSSL ? "true" : "false";
       json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + ssl + "\"";
-      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\", \"board_name\": \""+String(config.mqttConfig.boardName) +"\"";
+      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\",";
+      json += " \"board_name\": \""+String(config.mqttConfig.boardName) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
     }
   }
   json +="}";

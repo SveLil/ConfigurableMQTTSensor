@@ -15,7 +15,6 @@ public:
   void deleteSensorConfiguration(const int sensorId);
   bool connectToWifi();
   bool connectToMQTT(PubSubClient &client);
-  bool isConnectedToMQTT();
   ConfigurationStruct getConfig();
   Sensor** getSensors();
   int getSensorCount();

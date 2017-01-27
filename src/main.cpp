@@ -70,4 +70,5 @@ void loop() {
     dnsServer.processNextRequest();
   }
   server.handleClient();
+  mqttPublisher.publish();
 }
