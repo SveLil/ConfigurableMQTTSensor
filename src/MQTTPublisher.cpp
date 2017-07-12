@@ -1,55 +1,57 @@
 #include "MQTTPublisher.h"
 #include "BoardConfiguration.h"
+#include <ESP8266WiFi.h>
 
 MQTTPublisher::MQTTPublisher(PubSubClient &client) : _client(client) {}
 
 void MQTTPublisher::publish() {
-  Serial.println("Publish");
   BoardConfiguration& config = BoardConfiguration::getInstance();
+  config.connectToMQTT(_client);
   int sensorCount = config.getSensorCount();
   if (sensorCount == 0) {
-    Serial.println("No sensors, returning");
-    return;
-  }
-  if (!config.isConnectedToMQTT()) {
-    Serial.println("Not connected, returning");
     return;
   }
 
   unsigned long currentMillis = millis();
   unsigned long interval = config.getConfig().mqttConfig.readInterval;
   if (currentMillis - lastMillis < interval * 60000) {
-    Serial.println("Not long enough, returning");
     return;
   }
+  Serial.println("Publish");
   lastMillis = currentMillis;
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
   Sensor** sensors = config.getSensors();
   Serial.println("got sensors");
-  String boardName = config.getConfig().mqttConfig.boardName;
+  String baseTopic = config.getConfig().mqttConfig.baseTopic;
   for (int i=0; i<sensorCount; i++) {
+    _client.loop();
     Serial.println("Get sensor no. "+ String(i));
     Sensor* current = sensors[i];
     if (current == NULL) {
       Serial.println("NULL sensor");
       Serial.flush();
     } else {
-      Serial.println("Got sensor ");
-      Serial.flush();
       int sCount = current->getSensorCount();
-      Serial.println("Sub-Sensor count: "+ String(sCount));
-      Serial.flush();
+      String baseName = String(config.getSensorConfig(i).sensorName);
+      if (baseTopic.length() > 0) {
+        baseTopic = baseTopic + "/" + String(baseName);
+      } else {
+        baseTopic = String(baseName);
+      }
       for (int i=0; i<sCount;i++) {
         String name = current->getName(i);
-        Serial.println("Sub-Sensor name: "+ name);
-        Serial.flush();
-        String value = current->getValue(i);
-        Serial.println("Sub-Sensor value: "+ value);
-        Serial.flush();
-        String topic = boardName + "/" + name;
-        Serial.println("publish!");
-        Serial.flush();
-        _client.publish(topic.c_str(), value.c_str());
+        String value;
+        bool success = current->getValue(i,value);
+        if (success) {
+          String topic = baseTopic + "/" + name;
+          Serial.println("publish '"+ value+"' to: " + topic);
+          Serial.flush();
+          bool success = _client.publish(topic.c_str(), value.c_str(), true);
+          if (!success) {
+            Serial.println("Publish failed");
+            Serial.flush();
+          }
+        }
       }
     }
   }

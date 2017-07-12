@@ -22,6 +22,7 @@ ConfigurationServer server;
 PubSubClient client;
 BoardConfiguration& config = BoardConfiguration::getInstance();
 MQTTPublisher mqttPublisher = MQTTPublisher(client);
+long lastMsg = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -70,4 +71,9 @@ void loop() {
     dnsServer.processNextRequest();
   }
   server.handleClient();
+  long now = millis();
+  if (now - lastMsg > 100) {
+    lastMsg = now;
+    mqttPublisher.publish();
+  }
 }

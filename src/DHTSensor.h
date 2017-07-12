@@ -8,7 +8,7 @@ class DHTSensor : public Sensor {
 public:
   explicit DHTSensor(const SensorConfiguration &sensorConfig);
   int getSensorCount();
-  String getValue(int index);
+  bool getValue(int index, String& value);
   String getName(int index);
 private:
   SensorConfiguration _sensorConfig;

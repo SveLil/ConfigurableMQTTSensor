@@ -12,22 +12,24 @@ int DHTSensor::getSensorCount() {
 
 String DHTSensor::getName(int index) {
   if (index == 0) {
-    return "Temperature";
+    return "temperature";
   } else {
-    return "Humidity";
+    return "humidity";
   }
 }
 
-String DHTSensor::getValue(int index) {
-  float value = 0;
+bool DHTSensor::getValue(const int index, String& value) {
+  float f_value = 0;
   if (index == 0) {
-    value = dht.readTemperature();
+    f_value = dht.readTemperature();
   } else {
-    value = dht.readHumidity();
+    f_value = dht.readHumidity();
   }
-  if (isnan(value)) {
+  if (isnan(f_value)) {
     Serial.println("Failed to read from DHT sensor!");
-    return "";
+    return false;
   }
-  return String(value);
+  value = String(f_value);
+  Serial.println("Read: " + value);
+  return true;
 }

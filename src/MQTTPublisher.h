@@ -10,7 +10,7 @@ public:
   void publish();
 private:
   PubSubClient _client;
-  String _boardName;
+  String _baseTopic;
   unsigned long lastMillis = 0;
   bool tickerAttached = false;
   void checkConfig();
