@@ -4,7 +4,7 @@ A ESP8266 based sensor that will send its updates to a MQTT server. The goal of 
 
 ## Usage
 
-Build and flash to your esp8266 board. When powered on, the board will open a new access point, named "ESP Sensor <ChipId>". After connecting to it, open a web browser and navigate to http://esp.sensor or http://1982.168.4.1
+Build and flash to your esp8266 board. When powered on, the board will open a new access point, named "ESP Sensor <ChipId>". After connecting to it, open a web browser and navigate to http://esp.sensor or http://192.168.4.1
 
 You can then enter the credentials of your network:
 ![wifi credentials screenshot](https://github.com/SveLil/ConfigurableMQTTSensor/raw/master/doc/wifi.png "wifi credentials Screenshot")
