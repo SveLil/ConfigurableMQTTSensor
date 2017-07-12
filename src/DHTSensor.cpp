@@ -12,9 +12,9 @@ int DHTSensor::getSensorCount() {
 
 String DHTSensor::getName(int index) {
   if (index == 0) {
-    return "Temperature";
+    return "temperature";
   } else {
-    return "Humidity";
+    return "humidity";
   }
 }
 
