@@ -1,34 +1,14 @@
 #include "MQTTPublisher.h"
 #include "BoardConfiguration.h"
+#include <ESP8266WiFi.h>
 
 MQTTPublisher::MQTTPublisher(PubSubClient &client) : _client(client) {}
 
 void MQTTPublisher::publish() {
   BoardConfiguration& config = BoardConfiguration::getInstance();
-  if (!_client.loop() || _client.state()) {
-    int mqttState = _client.state();
-    if (mqttState == MQTT_DISCONNECTED) {
-      //config.connectToMQTT(_client);
-    } else {
-      String error = "";
-      switch (mqttState) {
-        case MQTT_CONNECTION_TIMEOUT : error = "MQTT_CONNECTION_TIMEOUT"; break;
-        case MQTT_CONNECTION_LOST : error = "MQTT_CONNECTION_LOST"; break;
-        case MQTT_CONNECT_FAILED : error = "MQTT_CONNECT_FAILED"; break;
-        case MQTT_DISCONNECTED : error = "MQTT_DISCONNECTED"; break;
-        case MQTT_CONNECT_BAD_PROTOCOL : error = "MQTT_CONNECT_BAD_PROTOCOL"; break;
-        case MQTT_CONNECT_BAD_CLIENT_ID : error = "MQTT_CONNECT_BAD_CLIENT_ID"; break;
-        case MQTT_CONNECT_UNAVAILABLE : error = "MQTT_CONNECT_UNAVAILABLE"; break;
-        case MQTT_CONNECT_BAD_CREDENTIALS : error = "MQTT_CONNECT_BAD_CREDENTIALS"; break;
-        case MQTT_CONNECT_UNAUTHORIZED : error = "MQTT_CONNECT_UNAUTHORIZED"; break;
-      }
-      Serial.println("MQTT: " + error);
-      return;
-    }
-  }
+  config.connectToMQTT(_client);
   int sensorCount = config.getSensorCount();
   if (sensorCount == 0) {
-    Serial.println("No sensors, returning");
     return;
   }
 
@@ -42,34 +22,34 @@ void MQTTPublisher::publish() {
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
   Sensor** sensors = config.getSensors();
   Serial.println("got sensors");
-  String boardName = config.getConfig().mqttConfig.boardName;
+  String baseTopic = config.getConfig().mqttConfig.baseTopic;
   for (int i=0; i<sensorCount; i++) {
+    _client.loop();
     Serial.println("Get sensor no. "+ String(i));
     Sensor* current = sensors[i];
     if (current == NULL) {
       Serial.println("NULL sensor");
       Serial.flush();
     } else {
-      Serial.println("Got sensor ");
-      Serial.flush();
       int sCount = current->getSensorCount();
-      Serial.println("Sub-Sensor count: "+ String(sCount));
-      Serial.flush();
+      String baseName = String(config.getSensorConfig(i).sensorName);
+      if (baseTopic.length() > 0) {
+        baseTopic = baseTopic + "/" + String(baseName);
+      } else {
+        baseTopic = String(baseName);
+      }
       for (int i=0; i<sCount;i++) {
         String name = current->getName(i);
-        Serial.println("Sub-Sensor name: "+ name);
-        Serial.flush();
         String value;
         bool success = current->getValue(i,value);
         if (success) {
-          Serial.println("Sub-Sensor value: "+ value);
+          String topic = baseTopic + "/" + name;
+          Serial.println("publish '"+ value+"' to: " + topic);
           Serial.flush();
-          String topic = boardName + "/" + name;
-          Serial.println("publish to: " + topic);
-          Serial.flush();
-          bool success = _client.publish(topic.c_str(), value.c_str());
+          bool success = _client.publish(topic.c_str(), value.c_str(), true);
           if (!success) {
             Serial.println("Publish failed");
+            Serial.flush();
           }
         }
       }

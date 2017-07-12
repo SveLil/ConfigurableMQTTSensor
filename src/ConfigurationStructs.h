@@ -19,13 +19,14 @@ struct MQTTConfiguration {
   bool useSSL;
   char user[64];
   char password[64];
-  char boardName[256];
+  char baseTopic[256];
   int readInterval;
 };
 
 struct SensorConfiguration {
   int pin;
   SensorType sensorType;
+  char sensorName[256];
 };
 
 struct ConfigurationStruct {

@@ -30,7 +30,7 @@ void handleSaveMQTT() {
     password = config.mqttConfig.password;
   }
 
-  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("board_name"),interval);
+  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("baseTopic"),interval);
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -62,8 +62,9 @@ void handleSaveSensor() {
   } else {
     webServer.send(500, "application/json","{\"success\": false, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
   }
+  String sensorName = webServer.arg("sensorName");
 
-  boardConfig.saveSensorConfiguration( sensorId, sensorType, pin);
+  sensorId = boardConfig.saveSensorConfiguration( sensorId, sensorType, pin, sensorName);
   if (sensorId == -1) {
     webServer.send(500, "Content-type: application/json", "{\"success\": false, \"error\": \"Too many sensors\"}");
   } else {
@@ -119,8 +120,33 @@ void handleLoad() {
       String ssl = config.mqttConfig.useSSL ? "true" : "false";
       json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + ssl + "\"";
       json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\",";
-      json += " \"board_name\": \""+String(config.mqttConfig.boardName) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
+      json += " \"baseTopic\": \""+String(config.mqttConfig.baseTopic) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
     }
+    json += ", \"sensors\": [";
+    for (int i = 0; i < config.sensorCount; i++) {
+      if (first) {
+        first = false;
+      } else {
+        json += ",";
+      }
+      SensorConfiguration sensorConfig = boardConfig.getSensorConfig(i);
+      String sensorType;
+      if (sensorConfig.sensorType == DHT22_COMPATIBLE) {
+        sensorType = "DHT22";
+      } else if (sensorConfig.sensorType == SIMPLE_ANALOG) {
+        sensorType = "Analog";
+      } else if (sensorConfig.sensorType == SIMPLE_DIGITAL) {
+        sensorType = "Digital";
+      }
+      json += "{";
+      json += " \"sensorType\": \""+sensorType+ "\"";
+      json += ", \"pin\": \""+ String(sensorConfig.pin)+"\"";
+      json += ", \"sensorName\": \""+String(sensorConfig.sensorName)+"\"";
+      json += ", \"sensorId\": \""+String(i)+"\"";
+      json += "}";
+    }
+    json += "]";
+
   }
   json +="}";
   webServer.send(200, "Content-type: application/json", json);

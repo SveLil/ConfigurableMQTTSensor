@@ -229,7 +229,7 @@
 					</label>
 					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
 					<input id="password" name="password" type="password" placeholder="Password" />
-					<input id="board_name" name="board_name" type="text" placeholder="Board name" />
+					<input id="baseTopic" name="baseTopic" type="text" placeholder="Base topic" />
 					<input id="interval" name="interval" type="number" placeholder="Sensor read interval in minutes" />
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
@@ -248,6 +248,7 @@
 						<input id="sensorType" name="sensorType" type="text" style="display: none;" value="DHT22" />
 					</div>
 					<input id="pin" name="pin" type="number" placeholder="Pin" />
+					<input id="sensorName" name="sensorName" type="text" placeholder="Name" />
 					<input id="sensorId" name="sensorId" type="hidden" value="-1"/>
 					<button id="saveSensor" type="button">Save sensor</button>
 				</form>
@@ -384,7 +385,9 @@
 				});
 			}
 			for (var i=0; i<networks.length; i++) {
-				select.add(addOption(networks[i].ssid + " (" + networks[i].type +")"),  networks[i].ssid);
+				var ssid = networks[i].ssid;
+				var option = addOption(ssid + " (" + networks[i].type +")", ssid);
+				select.add(option);
 			}
 		};
 		xhr.open("GET","scan");
@@ -397,10 +400,10 @@
 		hide('#apcombo');
 		show('#ssid');
 	}
-	function addOption(value, text) {
+	function addOption(text, value) {
 		var option = document.createElement('option');
-		option.text = value;
-		option.value = text;
+		option.text = text;
+		option.value = value;
 		return option;
 	}
 	function createElement(type, text) {
@@ -423,6 +426,7 @@
 	function deleteSensor() {
 		var xhr = getXhr();
 		var cNodes = this.childNodes;
+		var parent = this.parentElement;
 		var sensorId;
 		for (var i=0; i<cNodes.length; i++) {
 			if (cNodes[i].name=="sensorId") {
@@ -430,7 +434,23 @@
 				break;
 			}
 		}
-		this.parentElement.removeChild(this);
+		var next = this.nextSibling
+		parent.removeChild(this);
+		xhr.onload = function() {
+			while (next) {
+				var cNodes = next.childNodes;
+				for (var i=0; i<cNodes.length; i++) {
+					if (cNodes[i].name=="sensorId") {
+						cNodes[i].value = cNodes[i].value - 1;
+						break;
+					}
+				}
+				next = next.nextSibling;
+			}
+			if (parent.childNodes.length == 1) { // There is always text node left
+				show('#SensorForm');
+			}
+		}
 		xhr.open("POST","deleteSensor");
 		xhr.setRequestHeader('Accept', 'application/json');
 		xhr.send(sensorId);
@@ -478,6 +498,63 @@
 		}
 		return false;
 	}
+	function createSensorForm(sensorId, sensorType, pin, sensorName) {
+		var sList = $('#sensorList');
+		var sDiv = document.createElement('form');
+		sDiv.className = "sensor";
+		var labelType = createElement("label", "Type");
+		sDiv.append(labelType);
+		var input =  document.createElement("input");
+		input.value = sensorType;
+		input.name = "sensorType";
+		input.disabled = true;
+		labelType.append(input);
+
+		var labelPin = createElement("label", "Pin");
+		sDiv.append(labelPin);
+		input =  document.createElement("input");
+		input.value =  pin;
+		input.disabled = true;
+		input.name = "pin";
+		labelPin.append(input);
+
+		var labelSensorName = createElement("label", "Name");
+		sDiv.append(labelSensorName);
+		input =  document.createElement("input");
+		input.value =  sensorName;
+		input.disabled = true;
+		input.name = "sensorName";
+		labelSensorName.append(input);
+
+		input =  document.createElement("input");
+		input.type = "hidden";
+		input.name = "sensorId";
+		input.value = sensorId;
+		sDiv.append(input);
+
+		var editBtn = createElement("button", "Edit sensor");
+		editBtn.className = "smallBtn";
+		editBtn.style = "float: left;";
+		editBtn.name = "editBtn";
+		editBtn.onclick = editSensor.bind(undefined, sDiv);
+		var btnDiv = document.createElement('div');
+		var delBtn = createElement("button", "Delete sensor");
+		delBtn.className = "smallBtn";
+		delBtn.style = "float: right;";
+		delBtn.name = "delBtn";
+		delBtn.onclick = deleteSensor.bind(sDiv);
+		btnDiv.append(editBtn);
+		btnDiv.append(delBtn);
+		btnDiv.style = "height: 40px; border: 0px;";
+		sDiv.append(btnDiv);
+		sList.append(sDiv);
+		var addSensorBtn =$('#addCancelSensor');
+		addSensorBtn.innerText ="Add Sensor";
+		addSensorBtn.disabled = false;
+		addSensorBtn.onclick = addSensor;
+
+		hide('#SensorForm');
+	}
 	function saveSensor(form) {
 		if (!form) {
 			form = $('#SensorForm');
@@ -492,54 +569,7 @@
 			if (!response.success) {
 				//display error;
 			}
-			var sensorId = response.sensorId;
-			var sList = $('#sensorList');
-			var sDiv = document.createElement('form');
-			sDiv.className = "sensor";
-			var labelType = createElement("label", "Type:");
-			sDiv.append(labelType);
-			var input =  document.createElement("input");
-			input.value = $('#sensorType').value;
-			input.name = "sensorType";
-			input.disabled = true;
-			labelType.append(input);
-
-			var labelPin = createElement("label", "Pin:");
-			sDiv.append(labelPin);
-			input =  document.createElement("input");
-			input.value =  $('#pin').value;
-			input.disabled = true;
-			input.name = "pin";
-			labelPin.append(input);
-
-			input =  document.createElement("input");
-			input.type = "hidden";
-			input.name = "sensorId";
-			input.value = sensorId;
-			sDiv.append(input);
-
-			var editBtn = createElement("button", "Edit sensor");
-			editBtn.className = "smallBtn";
-			editBtn.style = "float: left;";
-			editBtn.name = "editBtn";
-			editBtn.onclick = editSensor.bind(undefined, sDiv);
-			var btnDiv = document.createElement('div');
-			var delBtn = createElement("button", "Delete sensor");
-			delBtn.className = "smallBtn";
-			delBtn.style = "float: right;";
-			delBtn.name = "delBtn";
-			delBtn.onclick = deleteSensor.bind(sDiv);
-			btnDiv.append(editBtn);
-			btnDiv.append(delBtn);
-			btnDiv.style = "height: 40px; border: 0px;";
-			sDiv.append(btnDiv);
-			sList.append(sDiv);
-			var addSensorBtn =$('#addCancelSensor');
-			addSensorBtn.innerText ="Add Sensor";
-			addSensorBtn.disabled = false;
-			addSensorBtn.onclick = addSensor;
-
-			hide('#SensorForm');
+			createSensorForm(response.sensorId, $('#sensorType').value, $('#pin').value, $('#sensorName').value);
 		});
 	}
 
@@ -569,6 +599,11 @@
 			setIfDefined('password', config.mpassword);
 			setIfDefined('board_name', config.board_name);
 			setIfDefined('interval', config.interval);
+			if (config.sensors && config.sensors.length > 0) {
+				config.sensors.forEach(function(sensor) {
+					createSensorForm(sensor.sensorId, sensor.sensorType,sensor.pin, sensor.sensorName);
+				});
+			}
 		}
 		xhr.open("GET","load");
 		xhr.setRequestHeader('Accept', 'application/json');

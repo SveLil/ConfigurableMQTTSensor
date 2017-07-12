@@ -10,13 +10,14 @@ class BoardConfiguration {
 public:
   static BoardConfiguration& getInstance();
   void saveWifiConfiguration( const String& ssid, const String& password);
-  void saveMQTTConfiguration(const String& s_server,const int port, const bool useSSL, const String& s_user,  const String& s_password, const String& s_boardName, const int readInterval);
-  void saveSensorConfiguration( int sensorId, const SensorType& sensorType, const int pin);
-  void deleteSensorConfiguration(const int sensorId);
+  void saveMQTTConfiguration(const String& s_server,const int port, const bool useSSL, const String& s_user,  const String& s_password, const String& s_baseTopic, const int readInterval);
+  int saveSensorConfiguration( int sensorId, const SensorType& sensorType, const int pin,const String& sensorName);
+  bool deleteSensorConfiguration(const int sensorId);
   bool connectToWifi();
   bool connectToMQTT(PubSubClient &client);
   ConfigurationStruct getConfig();
   Sensor** getSensors();
+  SensorConfiguration getSensorConfig(const int sensorId);
   int getSensorCount();
 private:
   BoardConfiguration();
