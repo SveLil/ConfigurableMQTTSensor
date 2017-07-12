@@ -13,7 +13,7 @@ BoardConfiguration::BoardConfiguration() {
   // 2: Wifi configured (and working?) => Connect to Wifi and show MQTT BoardConfiguration page
   // 3: MQTT confiugured => Normal startup. Keep Server running? Show status? Show BoardConfiguration page?
   char s[5];
-  int loc = sizeof(s);
+  int loc = sizeof(testString);
   Serial.begin(115200);
   Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)+"+"+String(sizeof(sensorConfig))));
   EEPROM.begin(4096);
@@ -51,10 +51,30 @@ BoardConfiguration::BoardConfiguration() {
     }
     debugPrintConfig(true, true, data.status > 1);
     if (data.sensorCount > 0) {
-      EEPROM.get(loc, sensorConfig);
+      for (int i = 0; i < data.sensorCount; i++) {
+        EEPROM.get(loc, sensorConfig[i]);
+        loc += sizeof(SensorConfiguration);
+      }
+      debugPrintSensorConfig();
     }
   }
   sensorsInitialized = false;
+}
+
+void BoardConfiguration::debugPrintSensorConfig() {
+  for (int i = 0; i < data.sensorCount; i++) {
+    String sensorType;
+    if (sensorConfig[i].sensorType == DHT22_COMPATIBLE) {
+      sensorType = "DHT22";
+    } else if (sensorConfig[i].sensorType == SIMPLE_ANALOG) {
+      sensorType = "Analog";
+    } else if (sensorConfig[i].sensorType == SIMPLE_DIGITAL) {
+      sensorType = "Digital";
+    }
+    Serial.println("sensorConfig["+String(i)+"].pin : " + String(sensorConfig[i].pin));
+    Serial.println("sensorConfig["+String(i)+"].sensorName : " + String(sensorConfig[i].sensorName));
+    Serial.println("sensorConfig["+String(i)+"].sensorType : " + sensorType);
+  }
 }
 
 void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool printMQTT) {
@@ -90,8 +110,12 @@ void BoardConfiguration::saveSensorConfiguration() {
   save();
   int loc = sizeof(testString);
   loc += sizeof(data);
-  EEPROM.put(loc,sensorConfig);
+  for (int i = 0; i < data.sensorCount; i++) {
+    EEPROM.put(loc, sensorConfig[i]);
+    loc += sizeof(SensorConfiguration);
+  }
   EEPROM.commit();
+  debugPrintSensorConfig();
   Serial.println("Saved sensorConfig");
 }
 
@@ -256,10 +280,10 @@ int BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType&
     sensorConfig[sensorId].pin = pin;
     sensorConfig[sensorId].sensorType = sensorType;
   }
+  saveSensorConfiguration();
   if (sensorsInitialized) {
     initSensors(sensorId);
   }
-  saveSensorConfiguration();
   return sensorId;
 }
 

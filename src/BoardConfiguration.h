@@ -35,5 +35,6 @@ private:
   void saveSensorConfiguration();
   void initSensors(int index);
   void debugPrintConfig(bool printData, bool printWifi, bool printMQTT);
+  void debugPrintSensorConfig();
 };
 #endif

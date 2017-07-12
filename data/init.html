@@ -599,6 +599,7 @@
 			setIfDefined('password', config.mpassword);
 			setIfDefined('board_name', config.board_name);
 			setIfDefined('interval', config.interval);
+			setIfDefined('baseTopic', config.baseTopic);			
 			if (config.sensors && config.sensors.length > 0) {
 				config.sensors.forEach(function(sensor) {
 					createSensorForm(sensor.sensorId, sensor.sensorType,sensor.pin, sensor.sensorName);
