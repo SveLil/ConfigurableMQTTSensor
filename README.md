@@ -1,4 +1,4 @@
-# MQTT8266Sensor [![Build Status](https://travis-ci.org/SveLil/MQTT8266Sensor.svg?branch=master)](https://travis-ci.org/SveLil/MQTT8266Sensor) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0e9e407daa7a449e8e44a02a3651f225)](https://www.codacy.com/app/SveLil/MQTT8266Sensor?utm_source=github.com&utm_medium=referral&utm_content=SveLil/MQTT8266Sensor&utm_campaign=badger)
+# MQTT8266Sensor [![Build Status](https://travis-ci.org/SveLil/MQTT8266Sensor.svg?branch=master)](https://travis-ci.org/SveLil/mqtt8266Sensor) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/0e9e407daa7a449e8e44a02a3651f225)](https://www.codacy.com/app/SveLil/MQTT8266Sensor?utm_source=github.com&utm_medium=referral&utm_content=SveLil/mqtt8266Sensor&utm_campaign=badger)
 
 A ESP8266 based sensor that will send its updates to a MQTT server. The goal of this project was to create one firmware that fits all my sensors at home. It should be possible to do all specific configuration through the web UI.
 
