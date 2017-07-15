@@ -25,11 +25,11 @@ On the third tab, you can add/edit/delete information about the sensors that are
 ## TODO
 * Cleanup HTML, CSS + JavaScript
 * Cleanup serial output
-* ~~~Handle 'undefined' configuration options on the front end correctly, instead of displaying 'undefined'~~~
 * Implement update function through webserver (see [HTTPUpdateServer](https://github.com/esp8266/Arduino/blob/master/libraries/ESP8266HTTPUpdateServer/src/ESP8266HTTPUpdateServer.cpp))
 * Implement OTA update
+  * Either via web server or MQTT driven
 * Enable sleep mode
-  * Trough UI
+  * Through UI
   * Through physical switch
 * ~~~Add physical reset button~~~ (if GPIO 16 is HIGH on startup, config will be reset)
 * Add maximum number of sensors in UI
