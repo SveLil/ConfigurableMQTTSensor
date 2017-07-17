@@ -2,7 +2,8 @@
 #include <ESP8266WiFi.h>
 #include "DHTSensor.h"
 
-const char testString[] = "V0.1";
+const char currentVersion[] = "V0.2";
+const char v01String[] = "V0.1";
 
 WiFiClientSecure secureNet;
 WiFiClient net;
@@ -13,43 +14,27 @@ BoardConfiguration::BoardConfiguration() {
   // 2: Wifi configured (and working?) => Connect to Wifi and show MQTT BoardConfiguration page
   // 3: MQTT confiugured => Normal startup. Keep Server running? Show status? Show BoardConfiguration page?
   char s[5];
-  int loc = sizeof(testString);
+  int loc = sizeof(currentVersion);
   Serial.begin(115200);
   Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)+"+"+String(sizeof(sensorConfig))));
   EEPROM.begin(4096);
   EEPROM.get(0, s);
-  bool reset = false;
   if (digitalRead(16) == HIGH) {
-    //Reset
-    reset = true;
     Serial.println("Reset settings");
-  }
-  if (reset || String(s) != String(testString)) {
-    Serial.println("Clean, because: " + String(s));
-    data.wifiConfig.ssid[0] = 0;
-    data.wifiConfig.password[0] = 0;
-    data.sensorCount = 0;
-    data.status = 0;
-    data.mqttConfig.server[0] = 0;
-    data.mqttConfig.user[0] = 0;
-    data.mqttConfig.password[0] = 0;
-    data.mqttConfig.baseTopic[0] = 0;
-    data.mqttConfig.useSSL = false;
-    data.mqttConfig.port = 0;
-    data.mqttConfig.readInterval = 5;
+    wipe();
     delay(500);
-    loc = sizeof(s);
-    EEPROM.put(0, testString);
-    EEPROM.put(loc,data);
-    EEPROM.commit();
-    delay(500);
+  } else if (String(s) != String(currentVersion)) {
+    if (String(s) == String(v01String)) {
+      updateConfig01To02();
+    } else {
+      wipe();
+    }
   } else {
     EEPROM.get(loc, data);
     loc += sizeof(data);
     Serial.println("Loaded");
     if (data.status > 1) {
     }
-    debugPrintConfig(true, true, data.status > 1);
     if (data.sensorCount > 0) {
       for (int i = 0; i < data.sensorCount; i++) {
         EEPROM.get(loc, sensorConfig[i]);
@@ -57,8 +42,45 @@ BoardConfiguration::BoardConfiguration() {
       }
       debugPrintSensorConfig();
     }
+    debugPrintConfig(true, true, data.status > 1);
   }
   sensorsInitialized = false;
+}
+
+void BoardConfiguration::wipe() {
+  data.wifiConfig.ssid[0] = 0;
+  data.wifiConfig.password[0] = 0;
+  data.sensorCount = 0;
+  data.status = 0;
+  data.mqttConfig.server[0] = 0;
+  data.mqttConfig.user[0] = 0;
+  data.mqttConfig.password[0] = 0;
+  data.mqttConfig.baseTopic[0] = 0;
+  data.mqttConfig.useSSL = false;
+  data.mqttConfig.port = 0;
+  data.mqttConfig.readInterval = 5;
+  data.enableDeepSleep = false;
+  saveSensorConfiguration();
+}
+
+void BoardConfiguration::updateConfig01To02() {
+  ConfigurationStruct01 data01;
+  int loc = sizeof(currentVersion);
+  EEPROM.get(loc, data01);
+  if (data01.sensorCount > 0 ) {
+    for (int i = 0; i < data01.sensorCount; i++) {
+      EEPROM.get(loc, sensorConfig[i]);
+      loc += sizeof(SensorConfiguration);
+    }
+  }
+  data.mqttConfig = data01.mqttConfig;
+  data.sensorCount = data01.sensorCount;
+  data.status = data01.status;
+  data.enableDeepSleep = false;
+  strcpy( data.wifiConfig.ssid, data01.wifiConfig.ssid);
+  strcpy( data.wifiConfig.password, data01.wifiConfig.password );
+  data.wifiConfig.enableAP = true;
+  saveSensorConfiguration();
 }
 
 void BoardConfiguration::debugPrintSensorConfig() {
@@ -81,10 +103,12 @@ void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool p
   if (printData) {
     Serial.println("data.status : " + String(data.status));
     Serial.println("data.sensorCount : " + String(data.sensorCount));
+    Serial.println("data.enableDeepSleep : " + String(data.enableDeepSleep));
   }
   if (printWifi) {
     Serial.println("data.wifiConfig.ssid : " + String(data.wifiConfig.ssid));
     Serial.println("data.wifiConfig.password : " + String(data.wifiConfig.password));
+    Serial.println("data.wifiConfig.enableAP : " + String(data.wifiConfig.enableAP));
   }
   if (printMQTT) {
     Serial.println("data.mqttConfig.server : " + String(data.mqttConfig.server));
@@ -98,7 +122,8 @@ void BoardConfiguration::debugPrintConfig(bool printData, bool printWifi, bool p
 }
 
 void BoardConfiguration::save() {
-  int loc = sizeof(testString);
+  int loc = sizeof(currentVersion);
+  EEPROM.put(0, currentVersion);
   EEPROM.put(loc,data);
   EEPROM.commit();
   Serial.println("Saved");
@@ -108,7 +133,7 @@ void BoardConfiguration::save() {
 
 void BoardConfiguration::saveSensorConfiguration() {
   save();
-  int loc = sizeof(testString);
+  int loc = sizeof(currentVersion);
   loc += sizeof(data);
   for (int i = 0; i < data.sensorCount; i++) {
     EEPROM.put(loc, sensorConfig[i]);
@@ -125,10 +150,11 @@ BoardConfiguration& BoardConfiguration::getInstance() {
   return BoardConfiguration;
 }
 
-void BoardConfiguration::saveWifiConfiguration(const String& s_ssid, const String& s_password) {
+void BoardConfiguration::saveWifiConfiguration(const String& s_ssid, const String& s_password, const bool enableAP) {
   Serial.println("Saving WiFi configuration");
   s_ssid.toCharArray(data.wifiConfig.ssid,32);
   s_password.toCharArray(data.wifiConfig.password,64);
+  data.wifiConfig.enableAP = enableAP;
   if (data.status < 1) {
     data.status = 1;
     data.mqttConfig.server[0] = 0;
@@ -142,11 +168,12 @@ void BoardConfiguration::saveWifiConfiguration(const String& s_ssid, const Strin
   save();
 }
 
-void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int port, const bool useSSL, const String& s_user, const String& s_password, const String& s_baseTopic, const int readInterval) {
+void BoardConfiguration::saveMQTTConfiguration(const String& s_server, const int port, const bool useSSL, const String& s_user, const String& s_password, const String& s_baseTopic, const int readInterval, const bool enableDeepSleep) {
   Serial.println("Saving MQTT configuration");
   s_server.toCharArray(data.mqttConfig.server,256);
   data.mqttConfig.port=port;
   data.mqttConfig.useSSL=useSSL;
+  data.enableDeepSleep = enableDeepSleep;
   s_user.toCharArray(data.mqttConfig.user,64);
   s_password.toCharArray(data.mqttConfig.password,64);
   s_baseTopic.toCharArray(data.mqttConfig.baseTopic,256);

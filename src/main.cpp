@@ -9,6 +9,7 @@
 #include "ConfigurationServer.h"
 #include "MQTTPublisher.h"
 #include "Sensor.h"
+#include <ArduinoOTA.h>
 
 const byte DNS_PORT = 53;
 const char *domain = "esp.sensor";
@@ -22,7 +23,7 @@ ConfigurationServer server;
 PubSubClient client;
 BoardConfiguration& config = BoardConfiguration::getInstance();
 MQTTPublisher mqttPublisher = MQTTPublisher(client);
-long lastMsg = 0;
+unsigned long lastMsg = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -46,6 +47,11 @@ void setup() {
   uint32 realSize = ESP.getFlashChipRealSize();
   Serial.printf("Flash real size: %u\n\n", realSize);
 
+  for (int i = 12; i < 15; i++) {
+    pinMode(i, OUTPUT);
+    digitalWrite(i, 0);
+  }
+
   if (!config.connectToWifi()) {
     Serial.print("Configuring access point...");
     WiFi.softAPConfig(apIP, apIP, netMsk);
@@ -64,16 +70,27 @@ void setup() {
   server.start();
 
   mqttRunning = config.connectToMQTT(client);
+  ArduinoOTA.begin();
 }
 
 void loop() {
+  ArduinoOTA.handle();
+
+  unsigned long start = millis();
   if (dnsServerStarted) {
     dnsServer.processNextRequest();
   }
   server.handleClient();
-  long now = millis();
-  if (now - lastMsg > 100) {
-    lastMsg = now;
+  unsigned long diff = ( millis() - lastMsg);
+  if (diff > 100) {
     mqttPublisher.publish();
+    long sleepS = config.getConfig().mqttConfig.readInterval * 60;
+    if (config.getConfig().enableDeepSleep) {
+      diff = millis() - start;
+      lastMsg = millis();
+      ESP.deepSleep((sleepS * 1000000)-diff); //Adjust for processing time
+    } else {
+      lastMsg = millis();
+    }
   }
 }

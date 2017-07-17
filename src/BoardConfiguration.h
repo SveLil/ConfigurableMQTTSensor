@@ -9,8 +9,8 @@
 class BoardConfiguration {
 public:
   static BoardConfiguration& getInstance();
-  void saveWifiConfiguration( const String& ssid, const String& password);
-  void saveMQTTConfiguration(const String& s_server,const int port, const bool useSSL, const String& s_user,  const String& s_password, const String& s_baseTopic, const int readInterval);
+  void saveWifiConfiguration( const String& ssid, const String& password, const bool enableAP);
+  void saveMQTTConfiguration(const String& s_server,const int port, const bool useSSL, const String& s_user,  const String& s_password, const String& s_baseTopic, const int readInterval, const bool enableDeepSleep);
   int saveSensorConfiguration( int sensorId, const SensorType& sensorType, const int pin,const String& sensorName);
   bool deleteSensorConfiguration(const int sensorId);
   bool connectToWifi();
@@ -36,5 +36,7 @@ private:
   void initSensors(int index);
   void debugPrintConfig(bool printData, bool printWifi, bool printMQTT);
   void debugPrintSensorConfig();
+  void updateConfig01To02();
+  void wipe();
 };
 #endif

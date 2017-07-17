@@ -214,6 +214,10 @@
 					</div>
 					<input id="ssid" name="ssid" type="text" autocapitalize="none" placeholder="SSID" />
 					<input id="wifi_password" name="wifi_password" type="password" placeholder="Password" />
+					<label for="enableAP">
+						<input id="enableAP" type="checkbox" name="enableAP" />
+						Enable Access Point
+					</label>
 					<button id="submitWiFi" type="button">Save WiFi</button>
 				</form>
 			</div>
@@ -231,6 +235,10 @@
 					<input id="password" name="password" type="password" placeholder="Password" />
 					<input id="baseTopic" name="baseTopic" type="text" placeholder="Base topic" />
 					<input id="interval" name="interval" type="number" placeholder="Sensor read interval in minutes" />
+					<label for="enableDeepSleep">
+						<input id="enableDeepSleep" type="checkbox" name="enableDeepSleep" />
+						Enable Deep Sleep
+					</label>
 					<button id="submitMQTT" type="button">Save MQTT</button>
 				</form>
 			</div>
@@ -599,7 +607,9 @@
 			setIfDefined('password', config.mpassword);
 			setIfDefined('board_name', config.board_name);
 			setIfDefined('interval', config.interval);
-			setIfDefined('baseTopic', config.baseTopic);			
+			setIfDefined('baseTopic', config.baseTopic);
+			setIfDefined('enableAP', config.enableAP);
+			setIfDefined('enableDeepSleep', config.enableDeepSleep);
 			if (config.sensors && config.sensors.length > 0) {
 				config.sensors.forEach(function(sensor) {
 					createSensorForm(sensor.sensorId, sensor.sensorType,sensor.pin, sensor.sensorName);

@@ -11,6 +11,7 @@ enum SensorType {
 struct WiFiConfiguration {
   char ssid[32];
   char password[64];
+  bool enableAP;
 };
 
 struct MQTTConfiguration {
@@ -32,7 +33,20 @@ struct SensorConfiguration {
 struct ConfigurationStruct {
   int status;
   int sensorCount;
+  bool enableDeepSleep;
   WiFiConfiguration wifiConfig;
   MQTTConfiguration mqttConfig;
 };
+
+struct WiFiConfiguration01 {
+  char ssid[32];
+  char password[64];
+};
+struct ConfigurationStruct01 {
+  int status;
+  int sensorCount;
+  WiFiConfiguration01 wifiConfig;
+  MQTTConfiguration mqttConfig;
+};
+
 #endif

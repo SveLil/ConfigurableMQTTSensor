@@ -24,13 +24,14 @@ void handleSaveMQTT() {
   int port = webServer.arg("port").toInt();
   int interval = webServer.arg("interval").toInt();
   bool useSSL = webServer.arg("useSSL") == "true";
+  bool enableDeepSleep = webServer.arg("enableDeepSleep") == "true";
   String password = webServer.arg("password");
   if (password == MASK_PASSWORD) {
     ConfigurationStruct config = boardConfig.getConfig();
     password = config.mqttConfig.password;
   }
 
-  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("baseTopic"),interval);
+  boardConfig.saveMQTTConfiguration(  webServer.arg("server"), port, useSSL, webServer.arg("user"), password, webServer.arg("baseTopic"),interval, enableDeepSleep);
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -78,7 +79,9 @@ void handleSaveWiFi() {
     ConfigurationStruct config = boardConfig.getConfig();
     password = config.wifiConfig.password;
   }
-  boardConfig.saveWifiConfiguration( webServer.arg("ssid"), password);
+  bool enableAP = webServer.arg("enableAP") == "true";
+
+  boardConfig.saveWifiConfiguration( webServer.arg("ssid"), password,  enableAP);
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -110,17 +113,21 @@ void handleScan() {
   WiFi.scanDelete();
 }
 
+String boolToString(bool val) {
+  return val ? "true" : "false";
+}
+
 void handleLoad() {
   String json = "{";
   boolean first = true;
   ConfigurationStruct config = boardConfig.getConfig();
   if (config.status > 0) {
     json += "\"ssid\": \"" + String(config.wifiConfig.ssid) + "\", \"wpassword\": \""+MASK_PASSWORD+"\"";
+    json += ", \"enableAP\": \""+boolToString(config.wifiConfig.enableAP) +"\", \"enableDeepSleep\": \""+boolToString(config.enableDeepSleep) +"\"";
     if (config.status > 1) {
-      String ssl = config.mqttConfig.useSSL ? "true" : "false";
-      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + ssl + "\"";
-      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\",";
-      json += " \"baseTopic\": \""+String(config.mqttConfig.baseTopic) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
+      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + boolToString(config.mqttConfig.useSSL) + "\"";
+      json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\"";
+      json += ", \"baseTopic\": \""+String(config.mqttConfig.baseTopic) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
     }
     json += ", \"sensors\": [";
     for (int i = 0; i < config.sensorCount; i++) {
