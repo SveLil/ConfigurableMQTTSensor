@@ -12,13 +12,17 @@ void MQTTPublisher::publish() {
     return;
   }
 
-  unsigned long currentMillis = millis();
-  unsigned long interval = config.getConfig().mqttConfig.readInterval;
-  if (currentMillis - lastMillis < interval * 60000) {
-    return;
+  if (!firstRun) {
+    unsigned long currentMillis = millis();
+    unsigned long interval = config.getConfig().mqttConfig.readInterval;
+    if (currentMillis - lastMillis < interval * 60000) {
+      return;
+    }
+  } else {
+    firstRun = false;
   }
   Serial.println("Publish");
-  lastMillis = currentMillis;
+  lastMillis =  millis();
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
   Sensor** sensors = config.getSensors();
   Serial.println("got sensors");

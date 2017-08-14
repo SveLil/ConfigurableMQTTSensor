@@ -5,7 +5,8 @@ enum SensorType {
   NO_SENSOR,
   DHT22_COMPATIBLE,
   SIMPLE_ANALOG,
-  SIMPLE_DIGITAL
+  SIMPLE_DIGITAL,
+  BME280
 };
 
 struct WiFiConfiguration {

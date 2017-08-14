@@ -14,5 +14,6 @@ private:
   unsigned long lastMillis = 0;
   bool tickerAttached = false;
   void checkConfig();
+  bool firstRun = true;
 };
 #endif

@@ -226,7 +226,7 @@
 				<p>Set up your MQTT connection</p>
 				<form id="MQTTForm">
 					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder="MQTT Server" />
-					<input id="port" name="port" type="number" placeholder="Port" />
+					<input id="port" name="port" type="number" placeholder="1883" />
 					<label for="ssl">
 						<input id="ssl" type="checkbox" name="ssl" />
 						Use SSL
@@ -252,7 +252,10 @@
 						<select id="tlSelect" onchange="{
 							var tlSelect = $('#tlSelect');
 							$('#sensorType').value = tlSelect.options[tlSelect.selectedIndex].value;
-						}"><option value="DHT22">DHT22</option><option value="Analog">Analog</option><option value="Digital">Digital</option></select>
+						}">
+							<option value="DHT22">DHT22</option>
+							<option value="BME280">BME280</option>
+					</select>
 						<input id="sensorType" name="sensorType" type="text" style="display: none;" value="DHT22" />
 					</div>
 					<input id="pin" name="pin" type="number" placeholder="Pin" />

@@ -60,6 +60,8 @@ void handleSaveSensor() {
     sensorType = SIMPLE_ANALOG;
   } else if (sensorTypeString == "Digital") {
     sensorType = SIMPLE_DIGITAL;
+  } else if (sensorTypeString == "BME280") {
+    sensorType = BME280;
   } else {
     webServer.send(500, "application/json","{\"success\": false, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
   }
@@ -144,6 +146,8 @@ void handleLoad() {
         sensorType = "Analog";
       } else if (sensorConfig.sensorType == SIMPLE_DIGITAL) {
         sensorType = "Digital";
+      } else if (sensorConfig.sensorType == BME280) {
+        sensorType = "BME280";
       }
       json += "{";
       json += " \"sensorType\": \""+sensorType+ "\"";

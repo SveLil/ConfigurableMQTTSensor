@@ -2,6 +2,7 @@
 #include <Esp.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
+#include <BME280Sensor.h>
 #include <FS.h>
 #include <ESP8266WebServer.h>
 #include <PubSubClient.h>
@@ -47,11 +48,6 @@ void setup() {
   uint32 realSize = ESP.getFlashChipRealSize();
   Serial.printf("Flash real size: %u\n\n", realSize);
 
-  for (int i = 12; i < 15; i++) {
-    pinMode(i, OUTPUT);
-    digitalWrite(i, 0);
-  }
-
   if (!config.connectToWifi()) {
     Serial.print("Configuring access point...");
     WiFi.softAPConfig(apIP, apIP, netMsk);
@@ -66,6 +62,8 @@ void setup() {
     bool dnsStarted = dnsServer.start(DNS_PORT, domain, myIP);
     Serial.println("dnsServer started: " + String(dnsStarted));
     dnsServerStarted = true;
+  } else {
+    
   }
   server.start();
 
@@ -76,7 +74,6 @@ void setup() {
 void loop() {
   ArduinoOTA.handle();
 
-  unsigned long start = millis();
   if (dnsServerStarted) {
     dnsServer.processNextRequest();
   }
@@ -86,9 +83,17 @@ void loop() {
     mqttPublisher.publish();
     long sleepS = config.getConfig().mqttConfig.readInterval * 60;
     if (config.getConfig().enableDeepSleep) {
-      diff = millis() - start;
+      if (lastMsg > 0) {
+        diff = (millis() - lastMsg) - (sleepS * 1000000);
+      } else {
+        //First run
+        diff = 0;
+      }
       lastMsg = millis();
-      ESP.deepSleep((sleepS * 1000000)-diff); //Adjust for processing time
+      long sleepTime = (sleepS * 1000000)-diff;
+      Serial.println("going to sleep for: " + String((sleepTime/1000)) + "ms");
+      ESP.deepSleep(sleepTime); //Adjust for processing time
+      delay(100);
     } else {
       lastMsg = millis();
     }

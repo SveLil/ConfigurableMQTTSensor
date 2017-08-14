@@ -5,6 +5,6 @@
 class ConfigurationServer {
 public:
     void start();
-    void handleClient();    
+    void handleClient();
 private:
 };

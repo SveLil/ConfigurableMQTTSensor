@@ -1,6 +1,8 @@
 #include <BoardConfiguration.h>
 #include <ESP8266WiFi.h>
 #include "DHTSensor.h"
+#include "BME280Sensor.h"
+#include <Esp.h>
 
 const char currentVersion[] = "V0.2";
 const char v01String[] = "V0.1";
@@ -19,7 +21,7 @@ BoardConfiguration::BoardConfiguration() {
   Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)+"+"+String(sizeof(sensorConfig))));
   EEPROM.begin(4096);
   EEPROM.get(0, s);
-  if (digitalRead(16) == HIGH) {
+  if (digitalRead(15) == HIGH) {
     Serial.println("Reset settings");
     wipe();
     delay(500);
@@ -188,6 +190,7 @@ bool BoardConfiguration::connectToWifi() {
   if (data.status < 1) {
     return false;
   }
+  WiFi.mode(WIFI_STA);
   Serial.println("Configuration found, connecting to " + String(data.wifiConfig.ssid));
   WiFi.begin(data.wifiConfig.ssid, data.wifiConfig.password);
   unsigned long startMillis = millis();
@@ -216,7 +219,7 @@ bool BoardConfiguration::connectToMQTT(PubSubClient &client) {
   }
   client.setServer(data.mqttConfig.server, data.mqttConfig.port);
   Serial.println("Connect MQTT");
-  connectedToMQTT = client.connect(data.mqttConfig.baseTopic, data.mqttConfig.user, data.mqttConfig.password);
+  connectedToMQTT = client.connect(String(ESP.getChipId()).c_str(), data.mqttConfig.user, data.mqttConfig.password);
   Serial.println("Connection: " + String(connectedToMQTT));
   delay(100);
   client.loop();
@@ -228,13 +231,16 @@ ConfigurationStruct BoardConfiguration::getConfig() {
 }
 
 Sensor* getSensor(const SensorConfiguration &sConfig) {
-  if (sConfig.sensorType == DHT22_COMPATIBLE) {
-    Serial.println("Created DHT22 sensor");
-    return new DHTSensor(sConfig);
-  } else {
-    Serial.println("Unknown sensor: " + String(sConfig.sensorType) + " not: " + String(DHT22_COMPATIBLE));
-    return NULL;
+  switch (sConfig.sensorType) {
+    case DHT22_COMPATIBLE:
+        Serial.println("Created DHT22 sensor");
+        return new DHTSensor(sConfig);
+      case BME280:
+        Serial.println("Created BME280 sensor");
+        return new BME280Sensor(sConfig);
   }
+  Serial.println("Unknown sensor: " + String(sConfig.sensorType) + " not: " + String(DHT22_COMPATIBLE));
+  return NULL;
 }
 
 void BoardConfiguration::initSensors(int index=-1) {

@@ -1,3 +1,4 @@
+
 #ifndef BOARD_CONFIGURATION
 #define BOARD_CONFIGURATION
 #include <EEPROM.h>

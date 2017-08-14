@@ -1,17 +1,18 @@
-#ifndef DHT_SENSOR
-#define DHT_SENSOR
-#include <DHT.h>
+#ifndef BME280_SENSOR
+#define BME280_SENSOR
+#include <BME280I2C.h>
 #include "Sensor.h"
 #include "ConfigurationStructs.h"
 
-class DHTSensor : public Sensor {
+class BME280Sensor : public Sensor {
 public:
-  explicit DHTSensor(const SensorConfiguration &sensorConfig);
+  explicit BME280Sensor(const SensorConfiguration &sensorConfig);
   int getSensorCount();
   bool getValue(int index, String& value);
   String getName(int index);
 private:
   SensorConfiguration _sensorConfig;
-  DHT dht;
+  BME280I2C bme;
+  float temp, hum, pres;
 };
 #endif
