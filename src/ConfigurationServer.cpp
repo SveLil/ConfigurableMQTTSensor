@@ -1,7 +1,11 @@
 #include <Arduino.h>
 #include <FS.h>
-#include <ConfigurationServer.h>
-#include <BoardConfiguration.h>
+#include <map>
+#include "ConfigurationServer.h"
+#include "BoardConfiguration.h"
+#include "SensorManager.h"
+#include "SensorConfiguration.h"
+#include "ConfigurationStructs.h"
 
 ESP8266WebServer webServer = ESP8266WebServer(80);
 const int saveTypeWiFi = 0;
@@ -37,7 +41,7 @@ void handleSaveMQTT() {
 
 void handleDeleteSensor() {
   int sensorId = webServer.arg("sensorId").toInt();
-  boardConfig.deleteSensorConfiguration( sensorId );
+  boardConfig.deleteSensorConfigurationStruct( sensorId );
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -51,23 +55,11 @@ void handleSaveSensor() {
   Serial.println(msg);
 
   int sensorId = webServer.arg("sensorId").toInt();
-  int pin = webServer.arg("pin").toInt();
-  String sensorTypeString = webServer.arg("sensorType");
-  SensorType sensorType;
-  if (sensorTypeString == "DHT22") {
-    sensorType = DHT22_COMPATIBLE;
-  } else if (sensorTypeString == "Analog") {
-    sensorType = SIMPLE_ANALOG;
-  } else if (sensorTypeString == "Digital") {
-    sensorType = SIMPLE_DIGITAL;
-  } else if (sensorTypeString == "BME280") {
-    sensorType = BME280;
-  } else {
-    webServer.send(500, "application/json","{\"success\": false, \"error\": \"Unknown sensorType: '"+sensorTypeString+"'\"}");
-  }
-  String sensorName = webServer.arg("sensorName");
 
-  sensorId = boardConfig.saveSensorConfiguration( sensorId, sensorType, pin, sensorName);
+  String sensorType = webServer.arg("sensorType");
+  String sensorName = webServer.arg("sensorName");
+  String configString = webServer.arg("config");
+  sensorId = boardConfig.saveSensorConfigurationStruct( sensorId, sensorType, configString, sensorName);
   if (sensorId == -1) {
     webServer.send(500, "Content-type: application/json", "{\"success\": false, \"error\": \"Too many sensors\"}");
   } else {
@@ -138,20 +130,10 @@ void handleLoad() {
       } else {
         json += ",";
       }
-      SensorConfiguration sensorConfig = boardConfig.getSensorConfig(i);
-      String sensorType;
-      if (sensorConfig.sensorType == DHT22_COMPATIBLE) {
-        sensorType = "DHT22";
-      } else if (sensorConfig.sensorType == SIMPLE_ANALOG) {
-        sensorType = "Analog";
-      } else if (sensorConfig.sensorType == SIMPLE_DIGITAL) {
-        sensorType = "Digital";
-      } else if (sensorConfig.sensorType == BME280) {
-        sensorType = "BME280";
-      }
+      SensorConfigurationStruct sensorConfig = boardConfig.getSensorConfig(i);
       json += "{";
-      json += " \"sensorType\": \""+sensorType+ "\"";
-      json += ", \"pin\": \""+ String(sensorConfig.pin)+"\"";
+      json += " \"sensorType\": \""+String(sensorConfig.sensorType)+ "\"";
+      json += ", \"config\": "+ String(sensorConfig.configString);
       json += ", \"sensorName\": \""+String(sensorConfig.sensorName)+"\"";
       json += ", \"sensorId\": \""+String(i)+"\"";
       json += "}";
@@ -159,6 +141,41 @@ void handleLoad() {
     json += "]";
 
   }
+  json +="}";
+  webServer.send(200, "Content-type: application/json", json);
+}
+
+void handleLoadSensorTypeInfo() {
+  String json = "{";
+  boolean first = true;
+  int configInfoCount = SensorManager::getSensorConfigInfoCount();
+  json += "sensorTypes\": [";
+  for (int i = 0; i < configInfoCount; i++) {
+    if (first) {
+      first = false;
+    } else {
+      json += ",";
+    }
+    boolean firstConfig = true;
+    String sensorType = SensorManager::getSensorType(i);
+    json += "sensorType\": \""+sensorType+ "\"";
+    json += "configs\": [";
+    SensorConfigInfo* configInfo = SensorManager::getSensorConfigInfo(i);
+    int sensorConfigInfoCount= SensorManager::getSensorConfigInfoCount(i);
+    for (int j = 0; j < sensorConfigInfoCount; j++) {
+      if (firstConfig) {
+        firstConfig = false;
+      } else {
+        json += ",";
+      }
+      json += "{";
+      json += " \"name\": \""+String(configInfo[j].configName)+ "\"";
+      json += ", \"type\": \""+ String(ConfigTypeNames[configInfo[j].configType])+"\"";
+      json += "}";
+      json += "]";
+    }
+  }
+  json += "]";
   json +="}";
   webServer.send(200, "Content-type: application/json", json);
 }
@@ -171,6 +188,7 @@ void ConfigurationServer::start() {
   webServer.on("/saveWiFi", HTTP_POST, handleSaveWiFi);
   webServer.on("/scan", HTTP_GET, handleScan);
   webServer.on("/load", HTTP_GET, handleLoad);
+  webServer.on("/sensorTypeInfo", HTTP_GET, handleLoadSensorTypeInfo);
   webServer.on("/deleteSensor", HTTP_POST, handleDeleteSensor);
   webServer.on("/saveSensor", HTTP_POST, handleSaveSensor);
   webServer.begin();

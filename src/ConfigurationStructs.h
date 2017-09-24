@@ -1,7 +1,7 @@
 #ifndef CONFIG_STRUCTS
 #define CONFIG_STRUCTS
 
-enum SensorType {
+enum SensorType01 {
   NO_SENSOR,
   DHT22_COMPATIBLE,
   SIMPLE_ANALOG,
@@ -25,9 +25,9 @@ struct MQTTConfiguration {
   int readInterval;
 };
 
-struct SensorConfiguration {
-  int pin;
-  SensorType sensorType;
+struct SensorConfigurationStruct {
+  char configString[1024];
+  char sensorType[256];
   char sensorName[256];
 };
 
@@ -50,4 +50,9 @@ struct ConfigurationStruct01 {
   MQTTConfiguration mqttConfig;
 };
 
+struct SensorConfigurationStruct01 {
+  int pin;
+  SensorType01 sensorType;
+  char sensorName[256];
+};
 #endif

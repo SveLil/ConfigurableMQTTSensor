@@ -2,18 +2,22 @@
 #include <Esp.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
-#include <BME280Sensor.h>
 #include <FS.h>
 #include <ESP8266WebServer.h>
 #include <PubSubClient.h>
+#include <ArduinoOTA.h>
 #include "BoardConfiguration.h"
 #include "ConfigurationServer.h"
 #include "MQTTPublisher.h"
 #include "Sensor.h"
-#include <ArduinoOTA.h>
+#include "BME280Sensor.h"
+#include "DHTSensor.h"
+#include "SHT2XSensor.h"
 
 const byte DNS_PORT = 53;
 const char *domain = "esp.sensor";
+
+
 
 DNSServer dnsServer;
 IPAddress apIP(192, 168, 4, 1);
@@ -27,6 +31,10 @@ MQTTPublisher mqttPublisher = MQTTPublisher(client);
 unsigned long lastMsg = 0;
 
 void setup() {
+  //DHTSensor::registerSensor();
+  BME280Sensor::registerSensor();
+  //SHT2XSensor::registerSensor();
+
   Serial.begin(115200);
   Serial.println();
   Serial.println(ESP.getResetReason());
@@ -63,7 +71,7 @@ void setup() {
     Serial.println("dnsServer started: " + String(dnsStarted));
     dnsServerStarted = true;
   } else {
-    
+
   }
   server.start();
 

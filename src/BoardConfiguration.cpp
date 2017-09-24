@@ -1,10 +1,11 @@
-#include <BoardConfiguration.h>
-#include <ESP8266WiFi.h>
-#include "DHTSensor.h"
-#include "BME280Sensor.h"
 #include <Esp.h>
+#include <ESP8266WiFi.h>
+#include <map>
+#include "BoardConfiguration.h"
+#include "SensorManager.h"
 
-const char currentVersion[] = "V0.2";
+const char currentVersion[] = "V0.3";
+const char v02String[] = "V0.2";
 const char v01String[] = "V0.1";
 
 WiFiClientSecure secureNet;
@@ -28,6 +29,9 @@ BoardConfiguration::BoardConfiguration() {
   } else if (String(s) != String(currentVersion)) {
     if (String(s) == String(v01String)) {
       updateConfig01To02();
+      updateConfig02To03();
+    } else if (String(s) == String(v02String)) {
+      updateConfig02To03();
     } else {
       wipe();
     }
@@ -40,7 +44,7 @@ BoardConfiguration::BoardConfiguration() {
     if (data.sensorCount > 0) {
       for (int i = 0; i < data.sensorCount; i++) {
         EEPROM.get(loc, sensorConfig[i]);
-        loc += sizeof(SensorConfiguration);
+        loc += sizeof(SensorConfigurationStruct);
       }
       debugPrintSensorConfig();
     }
@@ -62,7 +66,35 @@ void BoardConfiguration::wipe() {
   data.mqttConfig.port = 0;
   data.mqttConfig.readInterval = 5;
   data.enableDeepSleep = false;
-  saveSensorConfiguration();
+  saveSensorConfigurationStruct();
+}
+
+void BoardConfiguration::updateConfig02To03() {
+  int loc = sizeof(currentVersion);
+  EEPROM.get(loc, data);
+  if (data.sensorCount > 0 ) {
+    for (int i = 0; i < data.sensorCount; i++) {
+      SensorConfigurationStruct01 sensorConfig01;
+      EEPROM.get(loc, sensorConfig01);
+      std::copy(std::begin(sensorConfig01.sensorName), std::end(sensorConfig01.sensorName), std::begin(sensorConfig[i].sensorName));
+      String sensorType;
+      String configString;
+      switch (sensorConfig01.sensorType) {
+        case DHT22_COMPATIBLE:
+          sensorType = String("DHT22");
+          configString = "[{\"name\":\"Pin\",\"value\":"+String(sensorConfig01.pin)+"}]";
+          break;
+        case BME280:
+          sensorType = String("BME280");
+          configString = "[{\"name\":\"Log sea level pressure\",\"value\":\"false\"},{\"name\":\"Altitude\",\"value\":\"0\"}]";
+          break;
+      }
+      configString.toCharArray(sensorConfig[i].configString,1024);
+      sensorType.toCharArray(sensorConfig[i].sensorType,256);
+      loc += sizeof(SensorConfigurationStruct01);
+    }
+  }
+  saveSensorConfigurationStruct();
 }
 
 void BoardConfiguration::updateConfig01To02() {
@@ -72,7 +104,7 @@ void BoardConfiguration::updateConfig01To02() {
   if (data01.sensorCount > 0 ) {
     for (int i = 0; i < data01.sensorCount; i++) {
       EEPROM.get(loc, sensorConfig[i]);
-      loc += sizeof(SensorConfiguration);
+      loc += sizeof(SensorConfigurationStruct);
     }
   }
   data.mqttConfig = data01.mqttConfig;
@@ -82,22 +114,14 @@ void BoardConfiguration::updateConfig01To02() {
   strcpy( data.wifiConfig.ssid, data01.wifiConfig.ssid);
   strcpy( data.wifiConfig.password, data01.wifiConfig.password );
   data.wifiConfig.enableAP = true;
-  saveSensorConfiguration();
+  saveSensorConfigurationStruct();
 }
 
 void BoardConfiguration::debugPrintSensorConfig() {
   for (int i = 0; i < data.sensorCount; i++) {
-    String sensorType;
-    if (sensorConfig[i].sensorType == DHT22_COMPATIBLE) {
-      sensorType = "DHT22";
-    } else if (sensorConfig[i].sensorType == SIMPLE_ANALOG) {
-      sensorType = "Analog";
-    } else if (sensorConfig[i].sensorType == SIMPLE_DIGITAL) {
-      sensorType = "Digital";
-    }
-    Serial.println("sensorConfig["+String(i)+"].pin : " + String(sensorConfig[i].pin));
+    Serial.println("sensorConfig["+String(i)+"].pin : " + String(sensorConfig[i].configString));
     Serial.println("sensorConfig["+String(i)+"].sensorName : " + String(sensorConfig[i].sensorName));
-    Serial.println("sensorConfig["+String(i)+"].sensorType : " + sensorType);
+    Serial.println("sensorConfig["+String(i)+"].sensorType : " + String(sensorConfig[i].sensorType));
   }
 }
 
@@ -133,13 +157,13 @@ void BoardConfiguration::save() {
 }
 
 
-void BoardConfiguration::saveSensorConfiguration() {
+void BoardConfiguration::saveSensorConfigurationStruct() {
   save();
   int loc = sizeof(currentVersion);
   loc += sizeof(data);
   for (int i = 0; i < data.sensorCount; i++) {
     EEPROM.put(loc, sensorConfig[i]);
-    loc += sizeof(SensorConfiguration);
+    loc += sizeof(SensorConfigurationStruct);
   }
   EEPROM.commit();
   debugPrintSensorConfig();
@@ -230,17 +254,8 @@ ConfigurationStruct BoardConfiguration::getConfig() {
   return data;
 }
 
-Sensor* getSensor(const SensorConfiguration &sConfig) {
-  switch (sConfig.sensorType) {
-    case DHT22_COMPATIBLE:
-        Serial.println("Created DHT22 sensor");
-        return new DHTSensor(sConfig);
-      case BME280:
-        Serial.println("Created BME280 sensor");
-        return new BME280Sensor(sConfig);
-  }
-  Serial.println("Unknown sensor: " + String(sConfig.sensorType) + " not: " + String(DHT22_COMPATIBLE));
-  return NULL;
+Sensor* getSensor(const SensorConfigurationStruct &sConfig) {
+  return SensorManager::createSensor(sConfig);
 }
 
 void BoardConfiguration::initSensors(int index=-1) {
@@ -251,7 +266,7 @@ void BoardConfiguration::initSensors(int index=-1) {
   if (index > -1) {
     Serial.println("Init for index: " + String(index));
     delete sensors[index];
-    SensorConfiguration sConfig = sensorConfig[index];
+    SensorConfigurationStruct sConfig = sensorConfig[index];
     sensors[index] = getSensor(sConfig);
   } else {
     if (sensorsInitialized) {
@@ -268,7 +283,7 @@ void BoardConfiguration::initSensors(int index=-1) {
     delay(500);
     sensors = new Sensor*[data.sensorCount];
     for (int i = 0; i<data.sensorCount; i++) {
-      SensorConfiguration sConfig = sensorConfig[i];
+      SensorConfigurationStruct sConfig = sensorConfig[i];
       Serial.println("create sensor: " + i);
       sensors[i] = getSensor(sConfig);
       createdSensorCount++;
@@ -291,17 +306,16 @@ int BoardConfiguration::getSensorCount() {
   return data.sensorCount;
 }
 
-int BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType& sensorType,const int pin, const String& sensorName) {
+int BoardConfiguration::saveSensorConfigurationStruct( int sensorId, const String& sensorType, const String& configString, const String& sensorName) {
   if (sensorId < 0 || sensorId >= getSensorCount()) {
     if (data.sensorCount >= 16) {
       Serial.println("Too many sensors, exiting");
       return -1;
     }
-    Serial.println("New sensor for pin" + String(pin) + " of type " + String(sensorType));
     Serial.println("Existing sensors: " + String(data.sensorCount));
     //New sensor
-    sensorConfig[data.sensorCount].pin = pin;
-    sensorConfig[data.sensorCount].sensorType = sensorType;
+    configString.toCharArray(sensorConfig[data.sensorCount].configString,1024);
+    sensorType.toCharArray(sensorConfig[data.sensorCount].sensorType,256);
     sensorName.toCharArray(sensorConfig[data.sensorCount].sensorName,256);
 
     Serial.println("Set new data");
@@ -310,17 +324,18 @@ int BoardConfiguration::saveSensorConfiguration( int sensorId, const SensorType&
     Serial.println("now " + String(data.sensorCount) + " sensors");
   } else {
     //Existing sensor
-    sensorConfig[sensorId].pin = pin;
-    sensorConfig[sensorId].sensorType = sensorType;
+    configString.toCharArray(sensorConfig[sensorId].configString,1024);
+    sensorType.toCharArray(sensorConfig[sensorId].sensorType,256);
+    sensorName.toCharArray(sensorConfig[sensorId].sensorName,256);
   }
-  saveSensorConfiguration();
+  saveSensorConfigurationStruct();
   if (sensorsInitialized) {
     initSensors(sensorId);
   }
   return sensorId;
 }
 
-bool BoardConfiguration::deleteSensorConfiguration(const int sensorId) {
+bool BoardConfiguration::deleteSensorConfigurationStruct(const int sensorId) {
   if (sensorId < 0 || sensorId >= getSensorCount()) {
     return false;
   } else {
@@ -328,19 +343,19 @@ bool BoardConfiguration::deleteSensorConfiguration(const int sensorId) {
     data.sensorCount = data.sensorCount - 1;
     // Shift left existing sensors
     for (int i = sensorId; i < data.sensorCount; i++) {
-      sensorConfig[i].sensorType = sensorConfig[i+1].sensorType;
-      sensorConfig[i].pin = sensorConfig[i+1].pin;
+      std::copy(std::begin(sensorConfig[i+1].sensorType), std::end(sensorConfig[i+1].sensorType), std::begin(sensorConfig[i].sensorType));
+      std::copy(std::begin(sensorConfig[i+1].configString), std::end(sensorConfig[i+1].configString), std::begin(sensorConfig[i].configString));
       std::copy(std::begin(sensorConfig[i+1].sensorName), std::end(sensorConfig[i+1].sensorName), std::begin(sensorConfig[i].sensorName));
     }
-    sensorConfig[data.sensorCount].sensorType = NO_SENSOR;
+    sensorConfig[data.sensorCount].sensorType[0] = 0;
     sensorConfig[data.sensorCount].sensorName[0] = 0;
-    sensorConfig[data.sensorCount].pin = -1;
-    saveSensorConfiguration();
+    sensorConfig[data.sensorCount].configString[0] = 0;
+    saveSensorConfigurationStruct();
     return true;
   }
 }
 
-SensorConfiguration BoardConfiguration::getSensorConfig(const int sensorId) {
+SensorConfigurationStruct BoardConfiguration::getSensorConfig(const int sensorId) {
   if (sensorId < 0 || sensorId >= getSensorCount()) {
     Serial.println("Index out of range (was: "+String(sensorId)+", max: "+String(getSensorCount())+")");
     Serial.flush();

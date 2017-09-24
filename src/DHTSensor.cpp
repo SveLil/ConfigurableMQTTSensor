@@ -1,10 +1,24 @@
-#include "DHTSensor.h"
 #include <DHT.h>
 #include <Adafruit_Sensor.h>
+#include "DHTSensor.h"
+#include "SensorManager.h"
 
-DHTSensor::DHTSensor(const SensorConfiguration &sensorConfig) : _sensorConfig(sensorConfig), dht(sensorConfig.pin, DHT22) {
+const char PIN_KEY[] = "Pin";
+
+DHTSensor::DHTSensor(const SensorConfiguration &sensorConfig) : _sensorConfig(sensorConfig), dht((sensorConfig[PIN_KEY][0]-48), DHT22) {
   dht.begin();
 };
+
+Sensor* createDHTSensor(const SensorConfiguration& sensorConfig) {
+  return new DHTSensor(sensorConfig);
+}
+
+void DHTSensor::registerSensor() {
+  SensorConfigInfo configInfo[1];
+  configInfo[0].configName = PIN_KEY;
+  configInfo[0].configType = INTEGER;
+  SensorManager::registerSensor("DHT22", configInfo, 1, &createDHTSensor);
+}
 
 int DHTSensor::getSensorCount() {
   return 2;

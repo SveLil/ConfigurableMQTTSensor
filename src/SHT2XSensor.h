@@ -1,18 +1,19 @@
-#ifndef DHT_SENSOR
-#define DHT_SENSOR
-#include <DHT.h>
+#ifndef SHT2XSensor
+#define STH2XSensor
+#include <Adafruit_HTU21DF.h>
 #include "Sensor.h"
 #include "SensorConfiguration.h"
 
-class DHTSensor : public Sensor {
+class SHT2XSensor : public Sensor {
 public:
-  explicit DHTSensor(const SensorConfiguration &sensorConfig);
+  explicit SHT2XSensor(const SensorConfiguration &sensorConfig);
   int getSensorCount();
   bool getValue(int index, String& value);
   String getName(int index);
   static void registerSensor();
 private:
   SensorConfiguration _sensorConfig;
-  DHT dht;
+  Adafruit_HTU21DF sensor;
+  bool connected;
 };
 #endif

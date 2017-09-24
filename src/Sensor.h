@@ -2,6 +2,7 @@
 #define BASE_SENSOR
 
 #include <Arduino.h>
+#include "ConfigurationStructs.h"
 
 class Sensor {
 public:
