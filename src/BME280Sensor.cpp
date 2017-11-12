@@ -8,7 +8,7 @@
 const char LOG_SEA_LEVEL_KEY[] = "Log sea level pressure";
 const char ALTITUDE_KEY[] = "Altitude";
 
-BME280Sensor::BME280Sensor(const SensorConfiguration &sensorConfig): _sensorConfig(sensorConfig) {//, dht(sensorConfig.pin, DHT22) {
+BME280Sensor::BME280Sensor(const SensorConfiguration &sensorConfig): _sensorConfig(sensorConfig) {
   bme.begin();
   hum = pres = temp = NAN;
   logSeaLevel = String(_sensorConfig[LOG_SEA_LEVEL_KEY]) == "true";
@@ -25,7 +25,14 @@ void BME280Sensor::registerSensor() {
   configInfo[0].configType = BOOLEAN;
   configInfo[1].configName = ALTITUDE_KEY;
   configInfo[1].configType = INTEGER;
-  SensorManager::registerSensor("BME280", configInfo, 2, &createBME280Sensor);
+  SensorManager::getInstance().registerSensor("BME280", configInfo, 2, &createBME280Sensor);
+}
+
+SensorConfigurationStruct BME280Sensor::getConfig() {
+  SensorConfigurationStruct config;
+  _sensorConfig.sensorName.toCharArray(config.sensorName, 128);
+  _sensorConfig.sensorType.toCharArray(config.sensorType,128);
+  return config;
 }
 
 int BME280Sensor::getSensorCount() {

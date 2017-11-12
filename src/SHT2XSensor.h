@@ -11,6 +11,7 @@ public:
   bool getValue(int index, String& value);
   String getName(int index);
   static void registerSensor();
+  SensorConfigurationStruct getConfig();
 private:
   SensorConfiguration _sensorConfig;
   Adafruit_HTU21DF sensor;

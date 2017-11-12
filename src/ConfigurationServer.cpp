@@ -41,7 +41,7 @@ void handleSaveMQTT() {
 
 void handleDeleteSensor() {
   int sensorId = webServer.arg("sensorId").toInt();
-  boardConfig.deleteSensorConfigurationStruct( sensorId );
+  boardConfig.deleteSensor( sensorId );
   webServer.send(200, "Content-type: application/json", "{\"success\": true}");
 }
 
@@ -59,7 +59,7 @@ void handleSaveSensor() {
   String sensorType = webServer.arg("sensorType");
   String sensorName = webServer.arg("sensorName");
   String configString = webServer.arg("config");
-  sensorId = boardConfig.saveSensorConfigurationStruct( sensorId, sensorType, configString, sensorName);
+  sensorId = boardConfig.saveSensor( sensorId, sensorType, configString, sensorName);
   if (sensorId == -1) {
     webServer.send(500, "Content-type: application/json", "{\"success\": false, \"error\": \"Too many sensors\"}");
   } else {
@@ -148,7 +148,7 @@ void handleLoad() {
 void handleLoadSensorTypeInfo() {
   String json = "{";
   boolean first = true;
-  int configInfoCount = SensorManager::getSensorConfigInfoCount();
+  int configInfoCount = SensorManager::getInstance().getSensorConfigInfoCount();
   json += "sensorTypes\": [";
   for (int i = 0; i < configInfoCount; i++) {
     if (first) {
@@ -157,11 +157,11 @@ void handleLoadSensorTypeInfo() {
       json += ",";
     }
     boolean firstConfig = true;
-    String sensorType = SensorManager::getSensorType(i);
+    String sensorType = SensorManager::getInstance().getSensorType(i);
     json += "sensorType\": \""+sensorType+ "\"";
     json += "configs\": [";
-    SensorConfigInfo* configInfo = SensorManager::getSensorConfigInfo(i);
-    int sensorConfigInfoCount= SensorManager::getSensorConfigInfoCount(i);
+    SensorConfigInfo* configInfo = SensorManager::getInstance().getSensorConfigInfo(i);
+    int sensorConfigInfoCount= SensorManager::getInstance().getSensorConfigInfoCount(i);
     for (int j = 0; j < sensorConfigInfoCount; j++) {
       if (firstConfig) {
         firstConfig = false;

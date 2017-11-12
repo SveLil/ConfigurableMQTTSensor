@@ -1,10 +1,9 @@
 #include "SensorManager.h"
 
-std::map<String,int> SensorManager::idIndexMap;
-std::vector<SensorConfigInfo*> SensorManager::configInfoArray;
-std::vector<int> SensorManager::sensorConfigInfoCount;
-std::vector<factoryFunctionType> SensorManager::factoryFunctions;
-std::vector<String> SensorManager::idArray;
+SensorManager& SensorManager::getInstance() {
+  static SensorManager me;
+  return me;
+}
 
 int SensorManager::getSensorConfigInfoCount() {
   return configInfoArray.size();
@@ -19,7 +18,7 @@ SensorConfigInfo* SensorManager::getSensorConfigInfo(int index) {
 }
 
 String SensorManager::getSensorType(int index) {
-  return idArray[index];
+ return idArray[index];
 }
 
 Sensor* SensorManager::createSensor(const SensorConfigurationStruct &sConfig) {

@@ -25,10 +25,11 @@ struct MQTTConfiguration {
   int readInterval;
 };
 
+const int CONFIG_STRING_SIZE = 512;
 struct SensorConfigurationStruct {
-  char configString[1024];
-  char sensorType[256];
-  char sensorName[256];
+  char configString[CONFIG_STRING_SIZE];
+  char sensorType[128];
+  char sensorName[128];
 };
 
 struct ConfigurationStruct {

@@ -7,12 +7,14 @@
 
 class SensorConfiguration {
 public:
-  explicit SensorConfiguration(const SensorConfigurationStruct configStruct) {
+  String sensorType;
+  String sensorName;
+  std::map<String,const char*> configMap;
+  explicit SensorConfiguration(const SensorConfigurationStruct &configStruct) {
     sensorName = String(configStruct.sensorName);
     sensorType = String(configStruct.sensorType);
-    StaticJsonBuffer<1024> jsonBuffer;
+    DynamicJsonBuffer jsonBuffer(CONFIG_STRING_SIZE);
     JsonArray& jsonConfigArray = jsonBuffer.parseArray(configStruct.configString);
-    std::map<String,String> configMap;
     for (auto value : jsonConfigArray) {
       JsonObject& vObject = value.as<JsonObject>();
       const char* cName = vObject["name"];
@@ -20,11 +22,27 @@ public:
       configMap[String(cName)] = cValue;
     }
   };
-  String sensorType;
-  String sensorName;
-  const std::map<String,const char*> configMap;
   const char* operator[] (const String& key) const {
     return configMap.find(key)->second;
   };
+  SensorConfigurationStruct toConfigStruct() {
+    SensorConfigurationStruct config;
+    sensorName.toCharArray(config.sensorName, 128);
+    sensorType.toCharArray(config.sensorType,128);
+    DynamicJsonBuffer jsonBuffer(CONFIG_STRING_SIZE);
+    JsonArray& root = jsonBuffer.createArray();
+
+  	for (std::map<String, const char*>::iterator it = configMap.begin(); it != configMap.end(); it++)
+  	{
+  		String key = it->first;
+  		const char* value = it->second;
+      JsonObject& o = jsonBuffer.createObject();
+      o["name"]=key.c_str();
+      o["value"]=value;
+      root.add(o);
+  	}
+
+    return config;
+  }
 };
 #endif

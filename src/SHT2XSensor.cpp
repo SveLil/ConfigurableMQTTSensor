@@ -15,9 +15,15 @@ Sensor* createSHT2XSensor(const SensorConfiguration& sensorConfig) {
 
 void SHT2XSensor::registerSensor() {
   SensorConfigInfo configInfo[0];
-  SensorManager::registerSensor("SHT2X", configInfo, 0, &createSHT2XSensor);
+  SensorManager::getInstance().registerSensor("SHT2X", configInfo, 0, &createSHT2XSensor);
 }
 
+SensorConfigurationStruct SHT2XSensor::getConfig() {
+  SensorConfigurationStruct config;
+  _sensorConfig.sensorName.toCharArray(config.sensorName, 128);
+  _sensorConfig.sensorType.toCharArray(config.sensorType,128);
+  return config;
+}
 
 int SHT2XSensor::getSensorCount() {
   return 2;

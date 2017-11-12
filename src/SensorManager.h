@@ -1,6 +1,5 @@
 #ifndef SENSOR_MANAGER
 #define SENSOR_MANAGER
-
 #include <vector>
 #include <map>
 #include "ConfigurationStructs.h"
@@ -25,17 +24,18 @@ struct SensorConfigInfo {
 
 class SensorManager {
 public:
-  static int getSensorConfigInfoCount();
-  static int getSensorConfigInfoCount(int index);
-  static void registerSensor(const String& sensorType, SensorConfigInfo* configInfo, int configInfoCount, factoryFunctionType factoryFunction);
-  static SensorConfigInfo* getSensorConfigInfo(int index);
-  static String getSensorType(int index);
-  static Sensor* createSensor(const SensorConfigurationStruct &sConfig);
+  static SensorManager& getInstance();
+  int getSensorConfigInfoCount();
+  int getSensorConfigInfoCount(int index);
+  void registerSensor(const String& sensorType, SensorConfigInfo* configInfo, int configInfoCount, factoryFunctionType factoryFunction);
+  SensorConfigInfo* getSensorConfigInfo(int index);
+  String getSensorType(int index);
+  Sensor* createSensor(const SensorConfigurationStruct &sConfig);
 private:
-  static std::map<String,int> idIndexMap;
-  static std::vector<String> idArray;
-  static std::vector<SensorConfigInfo*> configInfoArray;
-  static std::vector<int> sensorConfigInfoCount;
-  static std::vector<factoryFunctionType> factoryFunctions;
+  std::map<String,int> idIndexMap;
+  std::vector<SensorConfigInfo*> configInfoArray;
+  std::vector<int> sensorConfigInfoCount;
+  std::vector<factoryFunctionType> factoryFunctions;
+  std::vector<String> idArray;
 };
 #endif

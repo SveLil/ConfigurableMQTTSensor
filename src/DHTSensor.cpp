@@ -17,7 +17,14 @@ void DHTSensor::registerSensor() {
   SensorConfigInfo configInfo[1];
   configInfo[0].configName = PIN_KEY;
   configInfo[0].configType = INTEGER;
-  SensorManager::registerSensor("DHT22", configInfo, 1, &createDHTSensor);
+  SensorManager::getInstance().registerSensor("DHT22", configInfo, 1, &createDHTSensor);
+}
+
+SensorConfigurationStruct DHTSensor::getConfig() {
+  SensorConfigurationStruct config;
+  _sensorConfig.sensorName.toCharArray(config.sensorName, 128);
+  _sensorConfig.sensorType.toCharArray(config.sensorType,128);
+  return config;
 }
 
 int DHTSensor::getSensorCount() {

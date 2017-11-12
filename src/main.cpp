@@ -17,8 +17,6 @@
 const byte DNS_PORT = 53;
 const char *domain = "esp.sensor";
 
-
-
 DNSServer dnsServer;
 IPAddress apIP(192, 168, 4, 1);
 IPAddress netMsk(255, 255, 255, 0);
@@ -31,15 +29,17 @@ MQTTPublisher mqttPublisher = MQTTPublisher(client);
 unsigned long lastMsg = 0;
 
 void setup() {
-  //DHTSensor::registerSensor();
-  BME280Sensor::registerSensor();
-  //SHT2XSensor::registerSensor();
+  // ESP.eraseConfig();
+  // SPIFFS.format();
 
   Serial.begin(115200);
   Serial.println();
   Serial.println(ESP.getResetReason());
   Serial.println(ESP.getResetInfo());
-  // rst_info* rInfo = ESP.getResetInfoPtr();
+
+  DHTSensor::registerSensor();
+  BME280Sensor::registerSensor();
+  SHT2XSensor::registerSensor();
 
   if (!SPIFFS.begin())
   {
@@ -52,20 +52,25 @@ void setup() {
       Serial.println("File init.html not found!");
     }
   }
-
-  uint32 realSize = ESP.getFlashChipRealSize();
-  Serial.printf("Flash real size: %u\n\n", realSize);
+  Serial.println(ESP.getFreeHeap());
+  Serial.flush();
 
   if (!config.connectToWifi()) {
-    Serial.print("Configuring access point...");
+    Serial.println("Configuring access point...");
+    Serial.flush();
     WiFi.softAPConfig(apIP, apIP, netMsk);
-    String ssid = "ESP Sensor " + String(ESP.getChipId());
+    Serial.println("Set mode...");
+    Serial.flush();
     WiFi.mode(WIFI_AP_STA);
+    String ssid = "ESP Sensor " + String(ESP.getChipId());
+    Serial.println("Start ap: " + ssid);
+    Serial.flush();
     WiFi.softAP(ssid.c_str());
-    delay(500);
     IPAddress myIP = WiFi.softAPIP();
+    delay(500);
     Serial.print("AP IP address: ");
     Serial.println(myIP);
+    Serial.flush();
     dnsServer.setTTL(300);
     bool dnsStarted = dnsServer.start(DNS_PORT, domain, myIP);
     Serial.println("dnsServer started: " + String(dnsStarted));
@@ -76,8 +81,11 @@ void setup() {
   server.start();
 
   mqttRunning = config.connectToMQTT(client);
+  mqttRunning = false;
   ArduinoOTA.begin();
 }
+
+int counter = 0;
 
 void loop() {
   ArduinoOTA.handle();
@@ -90,7 +98,7 @@ void loop() {
   if (diff > 100) {
     mqttPublisher.publish();
     long sleepS = config.getConfig().mqttConfig.readInterval * 60;
-    if (config.getConfig().enableDeepSleep) {
+      if (config.getConfig().enableDeepSleep) {
       if (lastMsg > 0) {
         diff = (millis() - lastMsg) - (sleepS * 1000000);
       } else {
@@ -105,5 +113,10 @@ void loop() {
     } else {
       lastMsg = millis();
     }
+    if (counter % 10 == 0) {
+      Serial.println(ESP.getFreeHeap());
+      Serial.flush();
+    }
+    counter++;
   }
 }

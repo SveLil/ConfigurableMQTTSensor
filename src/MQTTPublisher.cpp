@@ -24,7 +24,8 @@ void MQTTPublisher::publish() {
   Serial.println("Publish");
   lastMillis =  millis();
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
-  Sensor** sensors = config.getSensors();
+  //Sensor** sensors = config.getSensors();
+  std::vector<Sensor*> sensors = config.getSensors();
   Serial.println("got sensors");
   String baseTopic = config.getConfig().mqttConfig.baseTopic;
   for (int i=0; i<sensorCount; i++) {
