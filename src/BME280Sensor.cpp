@@ -1,4 +1,5 @@
 #include <BME280I2C.h>
+#include <EnvironmentCalculations.h>
 #include <Wire.h>
 #include <SPI.h>
 #include "BME280Sensor.h"
@@ -52,13 +53,13 @@ String BME280Sensor::getName(int index) {
 bool BME280Sensor::getValue(const int index, String& value) {
   float f_value = 0;
   if (index == 0) {
-    bme.read(pres, temp, hum,true, 0x1);
+    bme.read(pres, temp, hum, BME280::TempUnit_Celcius, BME280::PresUnit_hPa);
     f_value = temp;
   } else if (index == 1) {
     f_value = hum;
   } else {
     if (logSeaLevel) {
-      pres = bme.sealevel(alt);
+      pres =  EnvironmentCalculations::SealevelAlitude(alt, temp, pres);
     }
     f_value = pres;
   }
