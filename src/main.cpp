@@ -4,6 +4,7 @@
 #include <DNSServer.h>
 #include <FS.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
 #include <PubSubClient.h>
 #include <ArduinoOTA.h>
 #include "BoardConfiguration.h"
@@ -29,9 +30,6 @@ MQTTPublisher mqttPublisher = MQTTPublisher(client);
 unsigned long lastMsg = 0;
 
 void setup() {
-  // ESP.eraseConfig();
-  // SPIFFS.format();
-
   Serial.begin(115200);
   Serial.println();
   Serial.println(ESP.getResetReason());
@@ -52,8 +50,6 @@ void setup() {
       Serial.println("File init.html not found!");
     }
   }
-  Serial.println(ESP.getFreeHeap());
-  Serial.flush();
 
   if (!config.connectToWifi()) {
     Serial.println("Configuring access point...");
@@ -72,16 +68,21 @@ void setup() {
     Serial.println(myIP);
     Serial.flush();
     dnsServer.setTTL(300);
-    bool dnsStarted = dnsServer.start(DNS_PORT, domain, myIP);
-    Serial.println("dnsServer started: " + String(dnsStarted));
-    dnsServerStarted = true;
-  } else {
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+    dnsServerStarted = dnsServer.start(DNS_PORT, domain, myIP);
+    Serial.println("dnsServer started: " + String(dnsServerStarted));
 
+    if (!MDNS.begin("espSensor")) {
+      Serial.println("Error setting up MDNS responder!");
+    } else {
+      Serial.println("mDNS responder started");
+      // Add service to MDNS-SD
+      MDNS.addService("http", "tcp", 80);
+    }
+  } else {
+    mqttRunning = config.connectToMQTT(client);
   }
   server.start();
-
-  mqttRunning = config.connectToMQTT(client);
-  mqttRunning = false;
   ArduinoOTA.begin();
 }
 
@@ -95,28 +96,26 @@ void loop() {
   }
   server.handleClient();
   unsigned long diff = ( millis() - lastMsg);
-  if (diff > 100) {
-    mqttPublisher.publish();
-    long sleepS = config.getConfig().mqttConfig.readInterval * 60;
-      if (config.getConfig().enableDeepSleep) {
-      if (lastMsg > 0) {
-        diff = (millis() - lastMsg) - (sleepS * 1000000);
+  if (mqttRunning) {
+    if (diff > 100) {
+      mqttPublisher.publish();
+      long sleepS = config.getConfig().mqttConfig.readInterval * 60;
+        if (config.getConfig().enableDeepSleep) {
+        if (lastMsg > 0) {
+          diff = (millis() - lastMsg) - (sleepS * 1000000);
+        } else {
+          //First run
+          diff = 0;
+        }
+        lastMsg = millis();
+        long sleepTime = (sleepS * 1000000)-diff;
+        Serial.println("going to sleep for: " + String((sleepTime/1000)) + "ms");
+        ESP.deepSleep(sleepTime); //Adjust for processing time
+        delay(100);
       } else {
-        //First run
-        diff = 0;
+        lastMsg = millis();
       }
-      lastMsg = millis();
-      long sleepTime = (sleepS * 1000000)-diff;
-      Serial.println("going to sleep for: " + String((sleepTime/1000)) + "ms");
-      ESP.deepSleep(sleepTime); //Adjust for processing time
-      delay(100);
-    } else {
-      lastMsg = millis();
+      counter++;
     }
-    if (counter % 10 == 0) {
-      Serial.println(ESP.getFreeHeap());
-      Serial.flush();
-    }
-    counter++;
   }
 }

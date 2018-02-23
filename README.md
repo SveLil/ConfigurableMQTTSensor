@@ -29,6 +29,6 @@ On the third tab, you can add/edit/delete information about the sensors that are
 * Enable sleep mode
   * Trough UI
   * Through physical switch
-* ~~~Add physical reset button~~~ (if D7 is HIGH on startup, config will be reset)
+* ~~~Add physical reset button~~~ (if D7 is LOW on startup, config will be reset)
 * Add maximum number of sensors in UI
 * Show debug output for errors in UI

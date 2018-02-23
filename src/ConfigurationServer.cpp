@@ -7,7 +7,7 @@
 #include "SensorConfiguration.h"
 #include "ConfigurationStructs.h"
 
-ESP8266WebServer webServer = ESP8266WebServer(80);
+ESP8266WebServer webServer(80);
 const int saveTypeWiFi = 0;
 const int saveTypeMQTT = 1;
 const String MASK_PASSWORD = "SAVED";

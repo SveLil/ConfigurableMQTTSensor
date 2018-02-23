@@ -22,21 +22,32 @@ void MQTTPublisher::publish() {
     firstRun = false;
   }
   Serial.println("Publish");
+  Serial.flush();
   lastMillis =  millis();
   Serial.println("Publish data to mqtt for "+ String(sensorCount)+" sensors");
-  //Sensor** sensors = config.getSensors();
+  Serial.flush();
   std::vector<Sensor*> sensors = config.getSensors();
+  if (sensors.size() != sensorCount) {
+    Serial.println("Configured sensor count differs from vector size: "+ String(sensors.size()));
+    Serial.flush();    
+    return;
+  }
   Serial.println("got sensors");
+  Serial.flush();
   String baseTopic = config.getConfig().mqttConfig.baseTopic;
   for (int i=0; i<sensorCount; i++) {
     _client.loop();
     Serial.println("Get sensor no. "+ String(i));
-    Sensor* current = sensors[i];
+    Sensor* current = sensors.at(0);
     if (current == NULL) {
       Serial.println("NULL sensor");
       Serial.flush();
     } else {
+      Serial.println("Got sensor");
+      Serial.flush();
       int sCount = current->getSensorCount();
+      Serial.println("Sensor count: " + String(sCount));
+      Serial.flush();
       String baseName = String(config.getSensorConfig(i).sensorName);
       if (baseTopic.length() > 0) {
         baseTopic = baseTopic + "/" + String(baseName);

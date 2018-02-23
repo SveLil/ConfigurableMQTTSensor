@@ -8,6 +8,7 @@ const char v02String[] = "V0.2";
 const char v01String[] = "V0.1";
 WiFiClientSecure secureNet;
 WiFiClient net;
+bool sensorsInitialized = false;
 
 BoardConfiguration::BoardConfiguration() {
   // Check status
@@ -20,7 +21,10 @@ BoardConfiguration::BoardConfiguration() {
   Serial.println("SizeOf: "+String(loc)+"+" + String(sizeof(data)) );//+"+"+String(sizeof(sensorConfig)));
   EEPROM.begin(4096);
   EEPROM.get(0, s);
-  if (digitalRead(13) == HIGH) {
+  // Sleep for 500ms to make sure GPIOs are stable
+  delay(500);
+  pinMode(D7, INPUT_PULLUP);
+  if (digitalRead(D7) == LOW) {
     Serial.println("Reset settings");
     wipe();
     delay(500);
@@ -39,16 +43,8 @@ BoardConfiguration::BoardConfiguration() {
     Serial.println("Loaded");
     if (data.status > 1) {
     }
-    if (data.sensorCount > 0) {
-      // for (int i = 0; i < data.sensorCount; i++) {
-      //   EEPROM.get(loc, sensorConfig[i]);
-      //   loc += sizeof(SensorConfigurationStruct);
-      // }
-      // debugPrintSensorConfig();
-    }
     debugPrintConfig(true, true, data.status > 1);
   }
-  // sensorsInitialized = false;
 }
 
 void BoardConfiguration::wipe() {
@@ -167,11 +163,11 @@ void BoardConfiguration::saveSensorConfiguration(int index, SensorConfigurationS
   for (int i = 0; i < data.sensorCount; i++) {
     if (i == index) {
       EEPROM.put(loc, sensorConfig);
+      break;
     }
     loc += sizeof(SensorConfigurationStruct);
   }
   EEPROM.commit();
-  // debugPrintSensorConfig(sensorConfig);
   Serial.println("Saved sensorConfig");
 }
 
@@ -259,7 +255,7 @@ ConfigurationStruct BoardConfiguration::getConfig() {
   return data;
 }
 
-Sensor* getSensor(const SensorConfigurationStruct &sConfig) {
+Sensor* createSensor(const SensorConfigurationStruct &sConfig) {
   return SensorManager::getInstance().createSensor(sConfig);
 }
 
@@ -271,26 +267,26 @@ void BoardConfiguration::initSensors() {
     Serial.println("Creating new sensor array for "+ String(data.sensorCount) + " sensors");
     Serial.flush();
     delay(500);
-    //sensors = new Sensor*[data.sensorCount];
     for (int i = 0; i<data.sensorCount; i++) {
       SensorConfigurationStruct sensorConfig;
       EEPROM.get(loc, sensorConfig);
       loc += sizeof(SensorConfigurationStruct);
       SensorConfigurationStruct sConfig = sensorConfig;
       Serial.println("create sensor: " + i);
-      sensors.push_back(getSensor(sConfig));
+      sensors.push_back(createSensor(sConfig));
       createdSensorCount++;
     }
     Serial.println("Return");
+    sensorsInitialized = true;
 }
 
 std::vector<Sensor*> BoardConfiguration::getSensors() {
-  // if (!sensorsInitialized) {
-  //   Serial.println("!sensorsInitialized");
-  //   initSensors();
-  // } else {
-  //   Serial.println("sensorsInitialized");
-  // }
+  if (!sensorsInitialized) {
+    Serial.println("!sensorsInitialized");
+    initSensors();
+  } else {
+    Serial.println("sensorsInitialized");
+  }
   return sensors;
 }
 int BoardConfiguration::getSensorCount() {
@@ -313,12 +309,12 @@ int BoardConfiguration::saveSensor( int sensorId, const String& sensorType, cons
     sensorId = data.sensorCount;
     data.sensorCount++;
     Serial.println("create sensor");
-    sensors.push_back(getSensor(sConfig));
+    sensors.push_back(createSensor(sConfig));
     Serial.println("now " + String(data.sensorCount) + " sensors");
   } else {
     //Existing sensor
     delete sensors[sensorId];
-    sensors[sensorId] = getSensor(sConfig);
+    sensors[sensorId] = createSensor(sConfig);
   }
   saveSensorConfiguration(sensorId, sConfig);
   return sensorId;
