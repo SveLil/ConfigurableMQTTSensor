@@ -53,13 +53,13 @@ String BME280Sensor::getName(int index) {
 bool BME280Sensor::getValue(const int index, String& value) {
   float f_value = 0;
   if (index == 0) {
-    bme.read(pres, temp, hum, BME280::TempUnit_Celcius, BME280::PresUnit_hPa);
+    bme.read(pres, temp, hum, BME280::TempUnit::TempUnit_Celsius, BME280::PresUnit_hPa);
     f_value = temp;
   } else if (index == 1) {
     f_value = hum;
   } else {
     if (logSeaLevel) {
-      pres =  EnvironmentCalculations::SealevelAlitude(alt, temp, pres);
+      pres =  EnvironmentCalculations::EquivalentSeaLevelPressure(alt, temp, pres);
     }
     f_value = pres;
   }
