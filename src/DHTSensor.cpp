@@ -14,8 +14,9 @@ Sensor* createDHTSensor(const SensorConfiguration& sensorConfig) {
 }
 
 void DHTSensor::registerSensor() {
-  SensorConfigInfo configInfo[1];
-  configInfo[0].configName = PIN_KEY;
+  SensorConfigInfo *configInfo = new SensorConfigInfo[1];
+  strncpy(configInfo[0].configName, PIN_KEY, sizeof(PIN_KEY));
+  Serial.println(configInfo[0].configName);
   configInfo[0].configType = INTEGER;
   SensorManager::getInstance().registerSensor("DHT22", configInfo, 1, &createDHTSensor);
 }

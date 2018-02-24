@@ -26,7 +26,10 @@ Sensor* SensorManager::createSensor(const SensorConfigurationStruct &sConfig) {
   return (*factoryFunctions[index])(SensorConfiguration(sConfig));
 }
 
-void SensorManager::registerSensor(const String& sensorType, SensorConfigInfo* configInfo, int configInfoCount, factoryFunctionType factoryFunction) {
+void SensorManager::registerSensor(const String& sensorType, SensorConfigInfo configInfo[], int configInfoCount, factoryFunctionType factoryFunction) {
+  if (configInfoCount > 0) {
+    Serial.println(configInfo[0].configName);
+  }
   int index = configInfoArray.size();
   idIndexMap[sensorType] = index;
   idArray.push_back(sensorType);

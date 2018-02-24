@@ -14,14 +14,38 @@ const String MASK_PASSWORD = "SAVED";
 BoardConfiguration& boardConfig = BoardConfiguration::getInstance();
 
 void handleNotFound() {
-  Serial.println("Not found:" + webServer.uri());
+  Serial.println("Not found: " + webServer.uri());
   webServer.send(404, "text/plain");
 }
 
+String getContentType(String path) {
+  String type = "text/html";
+  if (path.endsWith(".css")) {
+    type = "text/css";
+  } else if (path.endsWith(".js")) {
+    type = "application/javascript"; 
+  } else if (path.endsWith(".png")) {
+    type = "image/png"; 
+  } else if (path.endsWith(".jpg")) {
+    type = "image/jpg"; 
+  }
+  return type;
+}
+
 void handleWeb() {
-  Serial.println("Handle Web");
-  File file = SPIFFS.open("/init.html", "r");
-  webServer.streamFile(file, "text/html");
+  String path = webServer.uri();
+  Serial.println("Handle Web: " + path);
+  if (path.endsWith("/")) {
+    path = "/index.html";
+  }
+  if (SPIFFS.exists(path)) {
+    File file = SPIFFS.open(path, "r");
+    webServer.streamFile(file, getContentType(path));
+    file.close();
+  } else {
+    Serial.println("File not found <" + path + ">");
+    handleNotFound();
+  }
 }
 
 void handleSaveMQTT() {
@@ -131,9 +155,13 @@ void handleLoad() {
         json += ",";
       }
       SensorConfigurationStruct sensorConfig = boardConfig.getSensorConfig(i);
+      String configString = String(sensorConfig.configString);
+      if (configString.length() == 0) {
+        configString = "[]";
+      }
       json += "{";
       json += " \"sensorType\": \""+String(sensorConfig.sensorType)+ "\"";
-      json += ", \"config\": "+ String(sensorConfig.configString);
+      json += ", \"config\": "+ configString;
       json += ", \"sensorName\": \""+String(sensorConfig.sensorName)+"\"";
       json += ", \"sensorId\": \""+String(i)+"\"";
       json += "}";
@@ -148,8 +176,8 @@ void handleLoad() {
 void handleLoadSensorTypeInfo() {
   String json = "{";
   boolean first = true;
-  int configInfoCount = SensorManager::getInstance().getSensorConfigInfoCount();
-  json += "sensorTypes\": [";
+  SensorManager sm = SensorManager::getInstance();
+  int configInfoCount = sm.getSensorConfigInfoCount();
   for (int i = 0; i < configInfoCount; i++) {
     if (first) {
       first = false;
@@ -157,11 +185,10 @@ void handleLoadSensorTypeInfo() {
       json += ",";
     }
     boolean firstConfig = true;
-    String sensorType = SensorManager::getInstance().getSensorType(i);
-    json += "sensorType\": \""+sensorType+ "\"";
-    json += "configs\": [";
-    SensorConfigInfo* configInfo = SensorManager::getInstance().getSensorConfigInfo(i);
-    int sensorConfigInfoCount= SensorManager::getInstance().getSensorConfigInfoCount(i);
+    String sensorType = sm.getSensorType(i);
+    json += "\""+sensorType+ "\": [";
+    SensorConfigInfo* configInfo = sm.getSensorConfigInfo(i);
+    int sensorConfigInfoCount= sm.getSensorConfigInfoCount(i);
     for (int j = 0; j < sensorConfigInfoCount; j++) {
       if (firstConfig) {
         firstConfig = false;
@@ -169,21 +196,19 @@ void handleLoadSensorTypeInfo() {
         json += ",";
       }
       json += "{";
+      Serial.println(configInfo[j].configName);
       json += " \"name\": \""+String(configInfo[j].configName)+ "\"";
       json += ", \"type\": \""+ String(ConfigTypeNames[configInfo[j].configType])+"\"";
       json += "}";
-      json += "]";
     }
+    json += "]";
   }
-  json += "]";
   json +="}";
   webServer.send(200, "Content-type: application/json", json);
 }
 
 void ConfigurationServer::start() {
-  webServer.onNotFound(handleNotFound);
-  webServer.on("/", HTTP_GET, handleWeb);
-  webServer.on("/init.html", HTTP_GET, handleWeb);
+  webServer.onNotFound(handleWeb);
   webServer.on("/saveMQTT", HTTP_POST, handleSaveMQTT);
   webServer.on("/saveWiFi", HTTP_POST, handleSaveWiFi);
   webServer.on("/scan", HTTP_GET, handleScan);

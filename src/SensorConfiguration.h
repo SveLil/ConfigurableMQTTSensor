@@ -42,6 +42,7 @@ public:
       root.add(o);
   	}
 
+    root.printTo(config.configString, root.measureLength() + 1);
     return config;
   }
 };

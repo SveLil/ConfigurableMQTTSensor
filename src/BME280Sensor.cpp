@@ -21,10 +21,10 @@ Sensor* createBME280Sensor(const SensorConfiguration& sensorConfig) {
 }
 
 void BME280Sensor::registerSensor() {
-  SensorConfigInfo configInfo[2];
-  configInfo[0].configName = LOG_SEA_LEVEL_KEY;
+  SensorConfigInfo *configInfo = new SensorConfigInfo[2];
+  strncpy(configInfo[0].configName, LOG_SEA_LEVEL_KEY, sizeof(LOG_SEA_LEVEL_KEY));
   configInfo[0].configType = BOOLEAN;
-  configInfo[1].configName = ALTITUDE_KEY;
+  strncpy(configInfo[1].configName, ALTITUDE_KEY, sizeof(ALTITUDE_KEY));
   configInfo[1].configType = INTEGER;
   SensorManager::getInstance().registerSensor("BME280", configInfo, 2, &createBME280Sensor);
 }

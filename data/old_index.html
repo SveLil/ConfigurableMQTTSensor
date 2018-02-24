@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>WiFi Login</title>
+	<link href="style.css" rel="stylesheet">
+	<script src="code.js"></script>
+</head>
+
+<body>
+	<div id="tabheader">
+		<ul class="tab">
+			<li><a href="javascript:void(0)" class="tablinks" id="WiFiTab" onclick="openTab('WiFi')">WiFi</a></li>
+			<li><a href="javascript:void(0)" class="tablinks" id="MQTTTab" onclick="openTab('MQTT')">MQTT</a></li>
+			<li><a href="javascript:void(0)" class="tablinks" id="SensorTab" onclick="openTab('Sensor')">Sensors</a></li>
+			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="SettingsTab" onclick="openTab('Settings')">Settings</a></li>
+			<li><a href="javascript:void(0)" style="display: none;" class="tablinks" id="AboutTab" onclick="openTab('About')">About</a></li>
+		</ul>
+	</div>
+	<div id="content">
+		<div id="tabs">
+			<div id="WiFi" class="tabcontent">
+				<h2>WiFi</h2>
+				<p>Set up your wifi connection</p>
+				<form id="WiFiForm">
+					<button id="getNetworks" type="button">Scan for networks</button>
+					<div id="apcombo" class="combo" style="display: none;" >
+						<select id="aplist" onchange="{
+							var aplist = $('#aplist');
+							$('#ssid').value = aplist.options[aplist.selectedIndex].value;
+						}"></select>
+					</div>
+					<input id="ssid" name="ssid" type="text" autocapitalize="none" placeholder="SSID" />
+					<input id="wifi_password" name="wifi_password" type="password" placeholder="Password" />
+					<label for="enableAP">
+						<input id="enableAP" type="checkbox" name="enableAP" />
+						Enable Access Point
+					</label>
+					<button id="submitWiFi" type="button">Save WiFi</button>
+				</form>
+			</div>
+			<div id="MQTT" class="tabcontent">
+				<h2>MQTT</h2>
+				<p>Set up your MQTT connection</p>
+				<form id="MQTTForm">
+					<input id="server" name="server" type="text" autocorrect="off" autocapitalize="none" placeholder="MQTT Server" />
+					<input id="port" name="port" type="number" placeholder="1883" />
+					<label for="ssl">
+						<input id="ssl" type="checkbox" name="ssl" />
+						Use SSL
+					</label>
+					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
+					<input id="password" name="password" type="password" placeholder="Password" />
+					<input id="baseTopic" name="baseTopic" type="text" placeholder="Base topic" />
+					<input id="interval" name="interval" type="number" placeholder="Sensor read interval in minutes" />
+					<label for="enableDeepSleep">
+						<input id="enableDeepSleep" type="checkbox" name="enableDeepSleep" />
+						Enable Deep Sleep
+					</label>
+					<button id="submitMQTT" type="button">Save MQTT</button>
+				</form>
+			</div>
+			<div id="Sensor" class="tabcontent">
+				<h2>Sensors</h2>
+				<p>Configure the sensors that are connected to the board</p>
+				<div id="sensorList">
+				</div>
+				<form id="SensorForm">
+					<div id="typeList" class="combo">
+						<select id="tlSelect" onchange="onSensorSelect()">
+							<option value="DHT22">DHT22</option>
+							<option value="BME280">BME280</option>
+							<option value="SHT2X">SHT2X</option>
+						</select>
+						<input id="sensorType" name="sensorType" type="text" style="display: none;" value="DHT22" />
+					</div>
+					<input id="sensorName" name="sensorName" type="text" placeholder="Name" />
+					<span id="activeSensorFormStart" style="display: none;"/>
+					<span id="activeSensorFormStop" style="display: none;"/>
+					<input id="sensorId" name="sensorId" type="hidden" value="-1"/>
+					<button id="saveSensor" type="button">Save sensor</button>
+				</form>
+				<form>
+					<button id="addCancelSensor" type="button" disabled="true">Add sensor</button>
+				</form>
+			</div>
+			<div id="Settings" class="tabcontent">
+				<h2>Settings</h2>
+				<p>Conigure additional settings of your sensor</p>
+				<form id="SettingsForm">
+					<label for="accesspoint">
+						<input id="accesspoint" type="checkbox" name="accesspoint" />
+						Enable access point
+					</label>
+					<label for="webserver">
+						<input id="webserver" type="checkbox" name="webserver" />
+						Enable webserver (warning: disableling the webserver will make the device unconfigurable)
+					</label>
+					<input id="user" name="user" type="text" autocorrect="off" autocapitalize="none" placeholder="User" />
+					<input id="password" name="password" type="password" placeholder="Password" />
+					<input id="board_name" name="board_name" type="text" placeholder="Board name" />
+					<button id="submitSettings" type="button">Save Settings</button>
+				</form>
+			</div>
+			<div id="Finish" class="tabcontent">
+				<h3>Configuration Saved</h3>
+				<p>Your board is now configured. Have fun.</p>
+			</div>
+		</div>
+		<div id="StatusWrapper">
+			<div id="Status"></div>
+		</div>
+	</div>
+	<script>loadData();</script>
+</body>
+</html>

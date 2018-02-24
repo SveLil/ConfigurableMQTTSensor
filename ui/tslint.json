@@ -1,0 +1,10 @@
+{
+    "extends": ["tslint:latest", "tslint-react"],
+    "rules": {
+        "jsx-boolean-value": [true, "never"],
+        "ordered-imports": false,
+        "arrow-parens": [ "as-needed" ],
+        "interface-name": false,
+        "object-literal-sort-keys": false
+    }
+}

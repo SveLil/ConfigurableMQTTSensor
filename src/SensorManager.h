@@ -18,7 +18,7 @@ enum ConfigType {
 static const char* ConfigTypeNames[] = {"STRING", "BOOLEAN", "INTEGER", "FLOAT"};
 
 struct SensorConfigInfo {
-  String configName;
+  char configName[32];
   ConfigType configType;
 };
 
@@ -27,7 +27,7 @@ public:
   static SensorManager& getInstance();
   int getSensorConfigInfoCount();
   int getSensorConfigInfoCount(int index);
-  void registerSensor(const String& sensorType, SensorConfigInfo* configInfo, int configInfoCount, factoryFunctionType factoryFunction);
+  void registerSensor(const String& sensorType, SensorConfigInfo configInfo[], int configInfoCount, factoryFunctionType factoryFunction);
   SensorConfigInfo* getSensorConfigInfo(int index);
   String getSensorType(int index);
   Sensor* createSensor(const SensorConfigurationStruct &sConfig);

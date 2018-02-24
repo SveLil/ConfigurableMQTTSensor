@@ -1,0 +1,180 @@
+body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #3F97FA;
+    margin: 0px;
+    min-width: 260px;
+}
+
+ul.tab {
+    list-style-type: none;
+    margin: 0px auto;
+    padding: 0px;
+    overflow: hidden;
+    width: 95%;
+    max-width: 640px;
+    margin-bottom: -15px;
+}
+
+ul.tab li {
+    float: left;
+    padding: 0px 1px;
+    top: 2px;
+    margin-bottom: 14px;
+}
+
+ul.tab li a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    padding: 10px 20px;
+    text-decoration: none;
+    border: 1px solid #ccc;
+    margin-left: -1px;
+    left: 1px;
+    background: #FFF;
+    position: relative;
+}
+
+ul.tab li a:hover {
+    background-color: #95C6FD;
+    border-color: #6FB2FC;
+}
+
+ul.tab li a:focus, .active {
+    border-bottom: 1px solid white;
+    z-index: 2;
+    background-color: #FFF;
+            top: 0px;
+}
+ul.tab li .active {
+    border-bottom: 1px solid white;
+    box-shadow: 1px 1px 15px 3px rgba(0, 0, 0, .4)
+    top: 0px;
+}
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border-top: 1px solid #ccc;
+    margin-top: -1px;
+}
+#content {
+    width: 95%;
+    max-width: 640px;
+    min-height: 480px;
+    margin: 0px auto;
+    background-color: #FFF;
+    box-shadow: 1px 1px 15px 3px rgba(0, 0, 0, .4);
+    border-radius: 1px;
+    position: relative;
+}
+#tabheader {
+    background: #6FB2FD;
+    padding: 5px 15px 0px 15px;
+}
+form {
+    padding: 0px 20px;
+}
+form > * {
+    display: block;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+}
+input {
+    font-size: 18px;
+}
+
+.combo {
+    background-color: #FFF;
+    display: inline-block;
+    position: relative;
+    padding: 0px;
+    border: 0px;
+}
+.combo:after {
+    content: '\25bc';
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    z-index: 5;
+}
+#sensorList {
+    padding: 0px 20px;
+    margin-bottom: 10px;
+}
+.sensor {
+    margin: 15px 0px;
+    padding: 10px 0px;
+    border: 1px solid #ccc;
+}
+.sensor * {
+    display: block;
+    padding: 5px 15px;
+    width: 100%;
+    box-sizing: border-box;
+font-size: 18px;
+}
+.sensor > label {
+    position: relative;
+    margin: 10px 0px;
+}
+.sensor > label > input {
+    position: absolute;
+    right: 15px;
+    top: 0px;
+    width: 80%;
+}
+.smallBtn {
+    width: 45%;
+    padding: 10px;
+    font-size: 14px;
+}
+
+#StatusWrapper {
+    height: 58px;
+}
+#Status {
+    padding: 20px 0px;
+    width: 100%;
+    bottom: 0px;
+    position: absolute;
+}
+button {
+    background-color: #5284BB;
+    color: #FFF;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
+}
+button:disabled {
+    background-color: #ddd;
+}
+select {
+    padding: 15px;
+    -webkit-appearance: none;
+    -ms-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border: 1px solid #ccc;
+    background-color: transparent;
+    position: relative;
+    cursor: pointer;
+    z-index: 10;
+    width: 100%;
+    font-size: 18px;
+}
+input[type="checkbox"] {
+}
+label {
+    width: 100%;
+    display: block;
+    text-align: left;
+    border: 0px;
+
+}
