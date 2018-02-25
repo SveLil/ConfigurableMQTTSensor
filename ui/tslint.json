@@ -5,6 +5,11 @@
         "ordered-imports": false,
         "arrow-parens": [ "as-needed" ],
         "interface-name": false,
-        "object-literal-sort-keys": false
+        "object-literal-sort-keys": false,
+        "member-access": false,
+        "jsx-key": false,
+        "jsx-wrap-multiline": false,
+        "jsx-no-multiline-js": false,
+        "variable-name": false
     }
 }

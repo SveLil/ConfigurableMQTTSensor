@@ -1,7 +1,9 @@
 import * as React from "react";
 import { HashRouter as Router, NavLink, Switch, Route, Redirect } from "react-router-dom";
-import { Menu, Container } from "semantic-ui-react";
+import { Menu, Container, Tab } from "semantic-ui-react";
 import Wifi from "./Wifi";
+import Mqtt from "./Mqtt";
+import Sensors from "./Sensors";
 
 interface RouteItem {
     component: React.ComponentType;
@@ -17,11 +19,11 @@ const menuItems: RouteItem[] = [
     }, {
         text: "MQTT",
         route: "/MQTT",
-        component: Wifi,
+        component: Mqtt,
     }, {
         text: "Sensors",
         route: "/Sensors",
-        component: Wifi,
+        component: Sensors,
     },
 ];
 
@@ -41,15 +43,19 @@ export default function App(): JSX.Element {
     return (
         <Router>
             <div>
-                <Menu fixed="top" inverted>
-                    <Container>
+                <Menu inverted>
+                    <Container text>
                         {...createMenu()}
                     </Container>
                 </Menu>
-                <Switch>
-                    {...createRoutes()}
-                    <Redirect from="/" to="Wifi"/>
-                </Switch>
+                <Container text>
+                <Tab.Pane style={{borderTop: "0px", marginTop: "-14px"}}>
+                    <Switch>
+                        {...createRoutes()}
+                        <Redirect from="/" to="Wifi"/>
+                    </Switch>
+                </Tab.Pane>
+                </Container>
             </div>
         </Router>
     );
