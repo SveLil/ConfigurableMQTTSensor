@@ -101,7 +101,7 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
         if (!this.props.sensor) {
             // New sensor form
             this.setState({
-                type: "",
+                type: " ",
                 currentConfig: {
                         name: "",
                     },
@@ -138,6 +138,7 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
                         label="Type"
                         name="type"
                         selection
+                        text={this.state.type}
                         options={keys.map(k => ({key: k, value: k, text: k}))}
                         onChange={this.onSelectSensor}
                     />

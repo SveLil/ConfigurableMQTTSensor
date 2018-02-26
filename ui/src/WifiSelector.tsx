@@ -1,9 +1,10 @@
 import * as React from "react";
 import { DropdownProps, Dropdown, Form } from "semantic-ui-react";
+import { getNetworks, Network } from "./api";
 
 interface WifiSelectorState {
     ssid?: string;
-    networks?: string[];
+    networks?: Network[];
     loading: boolean;
 }
 export default class WifiSelector extends React.Component<{ssid?: string}, WifiSelectorState> {
@@ -21,8 +22,8 @@ export default class WifiSelector extends React.Component<{ssid?: string}, WifiS
         if (data.value) {
             const newSsid = String(data.value);
             const newNetworks = this.state.networks || [];
-            if (newNetworks.indexOf(newSsid) < 0) {
-                newNetworks.push(newSsid);
+            if (newNetworks.some(network => network.ssid === newSsid)) {
+                newNetworks.push({ssid: newSsid});
             }
             this.setState({ssid: newSsid, networks: newNetworks});
         }
@@ -32,10 +33,7 @@ export default class WifiSelector extends React.Component<{ssid?: string}, WifiS
         if (!this.state.loading) {
             this.setState({ loading: true });
         }
-        // tslint:disable-next-line:no-this-assignment
-        const that = this;
-        setTimeout(
-            () => that.setState({loading: false, networks: ["H2G2", "Test", "3rd one"]}), 1000);
+        getNetworks().then(networks => this.setState({loading: false, networks}));
     }
 
     setSsid(_e: React.SyntheticEvent<HTMLElement>, data: DropdownProps): void {
@@ -44,7 +42,7 @@ export default class WifiSelector extends React.Component<{ssid?: string}, WifiS
 
     render(): JSX.Element[] {
         const networks = this.state.networks ?
-            this.state.networks.map(n => ({key: n, value: n, text: n}))
+            this.state.networks.map(n => ({key: n.ssid, value: n.ssid, text: n.ssid}))
             : [];
         return [
                 <Dropdown
@@ -59,8 +57,9 @@ export default class WifiSelector extends React.Component<{ssid?: string}, WifiS
                     onChange={this.setSsid}
                     text={this.state.ssid ? this.state.ssid : "Select SSID"}
                     fluid
+                    key="Dropdown"
                 />,
-                <Form.Button fluid onClick={this.loadNetworks}>Search for networks</Form.Button>,
+                <Form.Button key="SearchNetworks" fluid onClick={this.loadNetworks}>Search for networks</Form.Button>,
         ];
     }
 }

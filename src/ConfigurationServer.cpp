@@ -143,7 +143,7 @@ void handleLoad() {
     json += "\"ssid\": \"" + String(config.wifiConfig.ssid) + "\", \"wpassword\": \""+MASK_PASSWORD+"\"";
     json += ", \"enableAP\": \""+boolToString(config.wifiConfig.enableAP) +"\", \"enableDeepSleep\": \""+boolToString(config.enableDeepSleep) +"\"";
     if (config.status > 1) {
-      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"ssl\": \"" + boolToString(config.mqttConfig.useSSL) + "\"";
+      json += ", \"server\": \"" + String(config.mqttConfig.server) + "\", \"port\": \""+String(config.mqttConfig.port)+"\", \"useSSL\": \"" + boolToString(config.mqttConfig.useSSL) + "\"";
       json += ", \"user\": \"" + String(config.mqttConfig.user) + "\", \"mpassword\": \""+MASK_PASSWORD+"\"";
       json += ", \"baseTopic\": \""+String(config.mqttConfig.baseTopic) +"\", \"interval\": \""+String(config.mqttConfig.readInterval) +"\"";
     }

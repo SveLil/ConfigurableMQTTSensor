@@ -3,14 +3,16 @@ import SensorForm from "./SensorForm";
 import { Sensor, SensorConfig, getSensorConfig } from "./api";
 import { Loader } from "semantic-ui-react";
 
-export interface SensorsState {
-    sensors: Sensor[];
-    sensorConfig?: SensorConfig;
-}
+export default class Sensors extends React.Component<
+    {
+        sensors: Sensor[],
+    },
+    {
+        sensors: Sensor[];
+        sensorConfig?: SensorConfig;
+    }> {
 
-export default class Sensors extends React.Component<{}, SensorsState> {
-
-    constructor(props: {}) {
+    constructor(props: {sensors: Sensor[]}) {
         super(props);
         this.onAddSensor = this.onAddSensor.bind(this);
         this.onRemoveSensor = this.onRemoveSensor.bind(this);
@@ -18,7 +20,7 @@ export default class Sensors extends React.Component<{}, SensorsState> {
             this.setState({sensorConfig: sc});
         });
         this.state = {
-            sensors: [],
+            sensors: props.sensors,
         };
     }
 
@@ -54,7 +56,7 @@ export default class Sensors extends React.Component<{}, SensorsState> {
                     onSubmit={this.onUpdateSensor}
                     onRemove={this.onRemoveSensor}
                 />),
-            ] : [ <Loader /> ];
+            ] : [ <Loader key="loader" /> ];
         return (
             <div>
                 <p>Set up your sensors</p>
