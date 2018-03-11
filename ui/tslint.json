@@ -10,6 +10,7 @@
         "jsx-key": false,
         "jsx-wrap-multiline": false,
         "jsx-no-multiline-js": false,
-        "variable-name": false
+		"variable-name": false,
+		"no-submodule-imports": false,
     }
 }

@@ -1,5 +1,14 @@
 import * as React from "react";
-import { Form, DropdownProps, Segment } from "semantic-ui-react";
+import Button from "material-ui/Button";
+import Checkbox from "material-ui/Checkbox";
+import FormControlLabel from "material-ui/Form/FormControlLabel";
+import TextField from "material-ui/TextField";
+import Paper from "material-ui/Paper";
+import Select from 'material-ui/Select';
+import { InputLabel } from 'material-ui/Input';
+import { FormControl } from 'material-ui/Form';
+import { MenuItem } from 'material-ui/Menu';
+
 import { Sensor, SensorConfig, SensorParameterConfig } from "./api";
 
 export interface SensorFormProps {
@@ -48,12 +57,16 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
         let type: string;
         switch (param.configType) {
             case "BOOLEAN":
-                return <Form.Checkbox
-                    label={param.name}
-                    key={param.name}
-                    name={param.name}
-                    value={this.state ? this.state.currentConfig[param.name] : param.value || ""}
-                    onChange={this.onChange as any}
+                return <FormControlLabel
+				label={param.name}
+				control={
+					<Checkbox
+	                    key={param.name}
+						name={param.name}
+						value={this.state ? this.state.currentConfig[param.name] : param.value || ""}
+						onChange={this.onChange as any}
+					/>
+				}
                 />;
             case "INTEGER":
                 type = "number";
@@ -68,7 +81,7 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
                 type = "text";
                 break;
         }
-        return <Form.Input
+        return <TextField
             label={param.name}
             key={param.name}
             name={param.name}
@@ -79,7 +92,8 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
         />;
     }
 
-    onChange(_event: React.SyntheticEvent<HTMLInputElement>, data: {name: string, value: string}) {
+    onChange(event: React.SyntheticEvent<HTMLInputElement>) {
+		const data = event.target as any;
         const newSensorConfg: any = {...this.state.currentConfig};
         newSensorConfg[data.name] = data.value;
         this.setState({currentConfig: newSensorConfg, changed: true});
@@ -111,7 +125,8 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
         }
     }
 
-    onSelectSensor(_event: React.SyntheticEvent<HTMLElement>, data: DropdownProps) {
+    onSelectSensor(event: React.SyntheticEvent<HTMLElement>) {
+		const data = event.target as any;
         const sensor = data.value ? String(data.value) : undefined;
         if (sensor) {
             const currentConfig = this.state.currentConfig;
@@ -129,21 +144,26 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
     render(): JSX.Element {
         const keys = Object.keys(this.props.sensorConfig);
         return (
-            <Segment>
-                <Form onSubmit={this.onSubmit}>
+			<Paper>
+                <form onSubmit={this.onSubmit}>
                  {
                     this.props.sensor ?
-                    <Form.Input readOnly label="Type" value={this.props.sensor.sensorType} /> :
-                    <Form.Dropdown
-                        label="Type"
-                        name="type"
-                        selection
-                        text={this.state.type}
-                        options={keys.map(k => ({key: k, value: k, text: k}))}
-                        onChange={this.onSelectSensor}
-                    />
+					<TextField disabled label="Type" value={this.props.sensor.sensorType} /> :
+					<FormControl>
+						<InputLabel htmlFor="type-select">Type</InputLabel>
+						<Select
+							inputProps={{
+								name: "type",
+								id: "type-select",
+							}}
+							value={this.state.type}
+							onChange={this.onSelectSensor}
+						>
+						{keys.map(k => <MenuItem value={k}>{k}</MenuItem>)}
+						</Select>
+					</FormControl>
                  }
-                    <Form.Input
+                    <TextField
                         label="Name"
                         value={this.state.currentConfig.name}
                         name="name"
@@ -151,17 +171,17 @@ export default class SensorForm extends React.Component<SensorFormProps, SensorF
                         onChange={this.onChange as any}
                     />
                     {...this.state.formElements}
-                    <Form.Group>
-                        <Form.Button primary disabled={!this.state.changed}>
+                    <div>
+                        <Button variant="raised" color="primary" disabled={!this.state.changed}>
                             {this.props.sensor ? "Update Sensor" : "Add Sensor"}
-                        </Form.Button>
+                        </Button>
                         {this.props.sensor ?
-                            <Form.Button negative onClick={this.props.onRemove as any}>Remove Sensor</Form.Button> :
+                            <Button variant="raised" color="primary" onClick={this.props.onRemove as any}>Remove Sensor</Button> :
                             ""
                         }
-                    </Form.Group>
-                </Form>
-            </Segment>
+                    </div>
+                </form>
+			</Paper>
         );
     }
 }

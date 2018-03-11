@@ -1,18 +1,18 @@
 import * as React from "react";
+import withStyles from "material-ui/styles/withStyles";
+import { WithStyles } from "material-ui/styles";
 import SensorForm from "./SensorForm";
+import { styles } from "./App";
 import { Sensor, SensorConfig, getSensorConfig } from "./api";
-import { Loader } from "semantic-ui-react";
 
-export default class Sensors extends React.Component<
-    {
-        sensors: Sensor[],
-    },
+export type StyledSensorsConfig = { sensors: Sensor[]} & WithStyles<"root" | "paper">;
+class Sensors extends React.Component<StyledSensorsConfig,
     {
         sensors: Sensor[];
         sensorConfig?: SensorConfig;
     }> {
 
-    constructor(props: {sensors: Sensor[]}) {
+    constructor(props: StyledSensorsConfig) {
         super(props);
         this.onAddSensor = this.onAddSensor.bind(this);
         this.onRemoveSensor = this.onRemoveSensor.bind(this);
@@ -56,12 +56,21 @@ export default class Sensors extends React.Component<
                     onSubmit={this.onUpdateSensor}
                     onRemove={this.onRemoveSensor}
                 />),
-            ] : [ <Loader key="loader" /> ];
+            ] : [<div> Loading </div>];
         return (
-            <div>
-                <p>Set up your sensors</p>
+			<div
+				style={{
+					padding: '20px',
+					display: 'flex',
+					flexWrap: 'wrap',
+			 	}}
+				 className={this.props.classes.root}
+			>
+                <h2 className={this.props.classes.paper}>Set up your sensors</h2>
                 {...elements}
             </div>
         );
     }
 }
+
+export default withStyles(styles)<{ sensors: Sensor[]}>(Sensors);

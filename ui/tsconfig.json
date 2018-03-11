@@ -3,17 +3,19 @@
     "src/**/*.ts",
     "src/**/*.tsx"
   ],
+  "exclude": [
+	"node_modules",
+  ],
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
+    "module": "es6",
     "sourceMap": true,
     "jsx": "react",
-    "esModuleInterop": true,
-    "lib": [
-      "dom",
-      "es2015.promise",
-      "es5"
-    ],
+	"esModuleInterop": true,
+	"moduleResolution": "node",
+	"rootDir": "./src",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     /* Strict Type-Checking Options */
     "strict": true,
     "noImplicitAny": true,
@@ -24,6 +26,6 @@
 
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true
+	"noImplicitReturns": true,
   }
 }
